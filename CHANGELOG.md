@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.2.0](https://github.com/dvcol/synology-download/compare/v4.1.0...v4.2.0) (2026-05-08)
+
+
+### Features
+
+* **content:** adds queue ([2fd0cf1](https://github.com/dvcol/synology-download/commit/2fd0cf1dd1824d197af353afadde9eda33730fb3))
+
+
+### Bug Fixes
+
+* **navbar:** fix menu & theme ([#263](https://github.com/dvcol/synology-download/issues/263)) ([9aca8ea](https://github.com/dvcol/synology-download/commit/9aca8ea3fdf75015671e933013039032c1341f03))
+
 ## [4.1.0](https://github.com/dvcol/synology-download/compare/v4.0.1...v4.1.0) (2026-04-14)
 
 
