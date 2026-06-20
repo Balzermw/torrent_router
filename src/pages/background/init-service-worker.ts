@@ -18,6 +18,7 @@ import { onScrapedContentEvent } from './modules/scraped.handler';
 import { restoreSettings } from './modules/settings-handler';
 import { restoreLocalSate } from './modules/state-handler';
 import { restoreTaskSlice } from './modules/tasks-handler';
+import { onTorrentRouterEvents } from './modules/torrent-router.handler';
 import { onInstalledEvents } from './modules/update-handler';
 
 export async function initServiceWorker() {
@@ -45,6 +46,9 @@ export async function initServiceWorker() {
 
   // Set store to query service
   QueryService.init(store, ServiceInstance.Background);
+
+  // Listen to torrent router uploads
+  onTorrentRouterEvents();
 
   // Set store to download service
   DownloadService.init(store);

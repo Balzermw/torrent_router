@@ -588,6 +588,7 @@ export class QueryService {
       type: TaskCreateType.url,
       create_list: false,
       ...request,
+      torrent: request.torrent ?? torrent,
       destination: request?.destination ?? '',
     };
 

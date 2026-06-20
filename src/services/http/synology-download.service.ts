@@ -71,8 +71,10 @@ export class SynologyDownloadService extends SynologyService {
   }
 
   createTask(request: TaskCreateRequest): Observable<void> {
-    const { url, destination, username, password, extract_password } = request;
+    const { url, destination, username, password, extract_password, torrent } = request;
     try {
+      if (torrent) return this.createTaskFromTorrentFile(request);
+
       const params: HttpParameters = { method: TaskMethod.create };
       if (url?.length) params.uri = url?.map(_url => SynologyDownloadService._sanitizeUrl(_url))?.join(',');
 
@@ -84,6 +86,30 @@ export class SynologyDownloadService extends SynologyService {
     } catch (error) {
       return throwError(error);
     }
+  }
+
+  createTaskFromTorrentFile(request: TaskCreateRequest): Observable<void> {
+    const { destination, torrent } = request;
+    if (!torrent) return throwError(new Error('Torrent file is required.'));
+
+    const body = new FormData();
+    body.append('api', DownloadStationAPI.Task);
+    body.append('version', '1');
+    body.append('method', TaskMethod.create);
+    if (destination) body.append('destination', destination);
+    body.append('file', torrent, torrent instanceof File ? torrent.name : 'download.torrent');
+
+    return super.do<void>(
+      {
+        api: DownloadStationAPI.Task,
+        endpoint: Endpoint.Task,
+        method: HttpMethod.POST,
+        params: { method: TaskMethod.create },
+        version: '1',
+        body,
+      },
+      true,
+    );
   }
 
   deleteTask(id: string | string[], force = false): Observable<CommonResponse[]> {

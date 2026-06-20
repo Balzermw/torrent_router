@@ -1,7 +1,7 @@
 {
-  "name": "Download Station (client for Synology NAS)",
+  "name": "Synology Torrent Router",
   "version": "3.22.1",
-  "description": "Chrome extension for Synology Download Station",
+  "description": "Chrome extension for routing authenticated torrent downloads to Synology Download Station",
   "manifest_version": 3,
   "default_locale": "en",
   "icons": {
@@ -31,16 +31,44 @@
   },
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
+      "matches": [
+        "*://iptorrents.com/*",
+        "*://*.iptorrents.com/*",
+        "*://torrentleech.org/*",
+        "*://*.torrentleech.org/*",
+        "*://torrentleech.cc/*",
+        "*://*.torrentleech.cc/*",
+        "*://myanonamouse.net/*",
+        "*://*.myanonamouse.net/*"
+      ],
       "js": ["entry/contentScript.entry.js"]
     }
   ],
-  "permissions": ["scripting", "contextMenus", "notifications", "storage", "tabs", "downloads", "downloads.open", "clipboardRead", "sidePanel"],
-  "host_permissions": ["http://*/*", "https://*/*"],
+  "permissions": ["scripting", "contextMenus", "notifications", "storage", "tabs", "downloads", "sidePanel"],
+  "host_permissions": [
+    "*://iptorrents.com/*",
+    "*://*.iptorrents.com/*",
+    "*://torrentleech.org/*",
+    "*://*.torrentleech.org/*",
+    "*://torrentleech.cc/*",
+    "*://*.torrentleech.cc/*",
+    "*://myanonamouse.net/*",
+    "*://*.myanonamouse.net/*"
+  ],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "web_accessible_resources": [
     {
       "resources": ["*.html"],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "*://iptorrents.com/*",
+        "*://*.iptorrents.com/*",
+        "*://torrentleech.org/*",
+        "*://*.torrentleech.org/*",
+        "*://torrentleech.cc/*",
+        "*://*.torrentleech.cc/*",
+        "*://myanonamouse.net/*",
+        "*://*.myanonamouse.net/*"
+      ]
     }
   ],
   "content_security_policy": {

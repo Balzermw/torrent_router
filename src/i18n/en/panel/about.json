@@ -1,6 +1,6 @@
 {
   "panel__about__title": {
-    "message": "About Download Station (for Synology NAS)"
+    "message": "About Synology Torrent Router"
   },
 
   "panel__about__chip_version": {
@@ -18,11 +18,11 @@
   },
 
   "panel__about__description_body_p1": {
-    "message": "Synology Download is a React base Chrome extension to manage Synology Download Station tasks directly from the browser. It allows for the consultation, creation, suppression, edition and suspension of download task directly from this popup. It also permits the quick creation of tasks from any magnet link or from the contextual menu inside of the browser."
+    "message": "Synology Torrent Router is a Chrome extension for routing user-selected, authorized torrent and magnet downloads to the user's own Synology Download Station. It keeps the existing Download Station task UI while adding a destination prompt for captured torrent files."
   },
 
   "panel__about__description_body_p2": {
-    "message": "For more information on the current supported functionalities, please refer to the github page in the links below."
+    "message": "The extension does not scrape trackers, bypass login or CAPTCHA, automate content discovery, or provide access to content the user is not authorized to download."
   },
 
   "panel__about__limitations_title": {
@@ -33,7 +33,7 @@
     "message": "Quick-connect login is not currently supported due to the lack of official API documentation."
   },
   "panel__about__limitations_body_p2": {
-    "message": "Currently, only magnet urls are supported for the quick action menu."
+    "message": "The public build starts with default tracker coverage for IPTorrents, TorrentLeech, and MyAnonamouse. Additional custom tracker support may require granting site access and a future dynamic content-script registration pass."
   },
   "panel__about__limitations_body_p3": {
     "message": "Note that translation on previous version of Chrome (100 and below) might have only partial support in banner notifications."
@@ -46,14 +46,21 @@
     "message": "Contribute"
   },
   "panel__about__contribute_body": {
-    "message": "If you wish to support the development of this application, you can contribute a small donation, leave a review in the webstore, contribute to the code base, report issues or or suggest new features on github with the help of the links below."
+    "message": "Report issues, suggest features, or review the source code through the project links below."
   },
 
-  "panel__about__button_donate": {
-    "message": "donate"
+  "panel__about__credits_title": {
+    "message": "Credits and affiliation"
   },
+  "panel__about__credits_body_p1": {
+    "message": "This project is based on dvcol/synology-download, which is MIT licensed. The upstream copyright and license notice are preserved in this distribution."
+  },
+  "panel__about__credits_body_p2": {
+    "message": "This extension is not affiliated with Synology Inc., Google, Chrome, dvcol, or any torrent tracker."
+  },
+
   "panel__about__button_contribute": {
-    "message": "contribute"
+    "message": "source"
   },
   "panel__about__button_support": {
     "message": "support"
@@ -61,7 +68,7 @@
   "panel__about__button_privacy": {
     "message": "privacy"
   },
-  "panel__about__button_store": {
-    "message": "store"
+  "panel__about__button_upstream": {
+    "message": "upstream"
   }
 }

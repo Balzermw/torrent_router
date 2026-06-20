@@ -1,4 +1,4 @@
-/* eslint-disable ts/no-unsafe-assignment, ts/no-unsafe-argument */
+/* eslint-disable ts/no-unsafe-assignment, ts/no-unsafe-argument, ts/no-unnecessary-type-assertion */
 import type { SettingsSlice, StoreOrProxy } from '../../../models/store.model';
 
 import { firstValueFrom, of, throwError } from 'rxjs';
@@ -72,7 +72,7 @@ describe('settings-handler', () => {
     } as unknown as StoreOrProxy;
   });
 
-  it('should restore settings from sync storage by default', async () => {
+  it('should restore settings from local storage even when sync mode is sync', async () => {
     const settings: Partial<SettingsSlice> = {
       sync: { mode: SyncSettingMode.sync } as any,
       menus: [{ id: 'menu-1' }] as any,
@@ -83,6 +83,7 @@ describe('settings-handler', () => {
 
     await firstValueFrom(restoreSettings(store));
 
+    expect(syncGet).not.toHaveBeenCalled();
     expect(setSettings).toHaveBeenCalledWith(settings);
     expect(store.dispatch).toHaveBeenCalled();
   });

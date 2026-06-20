@@ -29,6 +29,7 @@ import {
   syncInterfaceReducer,
   syncNestedReducer,
   syncReducer,
+  syncTorrentRouterReducer,
 } from '../reducers/settings.reducer';
 
 export const settingsSlice = createSlice({
@@ -91,5 +92,6 @@ export const settingsSlice = createSlice({
     syncTasksSettings: (oldSettings, { payload }: PayloadAction<TaskSettings>) => syncNestedReducer<TaskSettings>(oldSettings, payload, 'tasks'),
     syncScrapeSettings: (oldSettings, { payload }: PayloadAction<Partial<ScrapeSettings>>) => syncNestedReducer<ScrapeSettings>(oldSettings, payload, 'scrape'),
     syncContentSettings: (oldSettings, { payload }: PayloadAction<Partial<ContentSettings>>) => syncNestedReducer<ContentSettings>(oldSettings, payload, 'content'),
+    syncTorrentRouter: syncTorrentRouterReducer,
   },
 });

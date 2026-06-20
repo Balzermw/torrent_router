@@ -1,7 +1,9 @@
 import { fromEventPattern } from 'rxjs';
 
+import { buildTorrentCaptureRequest } from '../../../services/torrent/tracker-adapters';
 import { storeProxy } from '../../../store/store-proxy';
 import { anchor$, lastClick$ } from '../service/anchor.service';
+import { torrentRouterDialog$ } from '../service/torrent-router-dialog.service';
 
 /**
  * List of supported protocols
@@ -49,6 +51,15 @@ async function listener(event: MouseEvent) {
   if (storeProxy.getState()?.settings?.content?.intercept === false) return;
   // Left clicks only
   if (event.button !== 0) return;
+
+  const torrentCapture = buildTorrentCaptureRequest(event, storeProxy.getState()?.settings?.torrentRouter);
+  if (torrentCapture) {
+    event.preventDefault();
+    event.stopPropagation();
+    torrentRouterDialog$.next({ open: true, request: torrentCapture });
+    return;
+  }
+
   if (!anchor?.href) return;
   if (!startsWithAnyProtocol(anchor.href, DOWNLOAD_ONLY_PROTOCOLS)) return;
   anchor$.next({
@@ -68,7 +79,7 @@ function addAnchorClickListener() {
 }
 function removeAnchorClickListener() {
   document.removeEventListener('click', listener);
-  document.addEventListener('contextmenu', listener);
+  document.removeEventListener('contextmenu', listener);
 }
 
 export const clickListener$ = fromEventPattern<MouseEvent>(addAnchorClickListener, removeAnchorClickListener);

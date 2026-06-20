@@ -1,117 +1,120 @@
-<h1 align="center">Welcome to Synology Download 👋</h1>
-<p>
-  <img src="https://img.shields.io/badge/npm-%3E%3D7.10.0-blue.svg" />
-  <img src="https://img.shields.io/badge/node-%3E%3D16.0.0-blue.svg" />
-  <a href="https://github.com/dvcol/synology-download#readme" target="_blank">
-    <img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" />
-  </a>
-  <a href="https://github.com/dvcol/synology-download/graphs/commit-activity" target="_blank">
-    <img alt="Maintenance" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg" />
-  </a>
-  <a href="https://github.com/dvcol/synology-download/blob/master/LICENSE" target="_blank">
-    <img alt="License: MIT" src="https://img.shields.io/github/license/dvcol/synology-download" />
-  </a>
- <a href="https://paypal.me/dvcol/5" target="_blank">
-    <img alt="donate" src="https://img.shields.io/badge/Donate%20€-PayPal-brightgreen.svg" />
-  </a>
-</p>
+# Synology Torrent Router
 
-> Synology Download is a React base Chrome extension to manage Synology Download Station tasks directly from the browser.
+Synology Torrent Router is a Chrome MV3 extension that routes user-selected, authorized torrent and magnet downloads to your own Synology Download Station.
 
-> The popup support the following functionalities
->
-> * Tabbed download tasks display and filtering
-> * Task pause, play, seed, delete, destination edit
-> * Task creation through rich form (destination, url, ftp, zip password)
-> * Http, Https, 2FA login over local network
-> * Context menu creation (with custom destination)
-> * Quick action menu creation (with custom destination)
+It is intended for local/home NAS use. When you click a supported torrent download link, the extension asks for a destination folder, validates that the tracker returned a real `.torrent` file, and uploads it to Download Station.
 
-> The content script supports the following functionalities:
->
-> * One click download on magnet links
-> * Quick menu dropdown if more than one exist
-> * Rich task creation modal on quick action or context menu
-> * In-page notification for task creation
+## Features
 
-> The service worker supports the following functionalities:
->
-> * Periodic task polling
-> * Custom badge number and text display for filtered tasks (by tabs, status, destination)
-> * Browser notifications on task completion/error (conditional on polling behavior and extensions permissions)
+- Send user-selected `.torrent` files to Synology Download Station.
+- Keep the existing Download Station task UI for viewing and managing tasks.
+- Prompt for a destination folder before upload.
+- Browse Synology folders when choosing preset paths.
+- Save destination presets for TV/Plex, Comics/Comga, Ebooks, and manual paths.
+- Remember recent destination folders per tracker/preset.
+- Validate torrent payloads and reject HTML/login/error pages.
+- Continue supporting magnet and URL task creation.
+- Store NAS settings and presets locally in Chrome extension storage.
 
-## Limitation
+## Download And Install
 
-> Quick-connect login is not currently supported due to the lack of official API documentation.
->
-> Currently, only magnet urls are supported for the quick action menu.
->
-> Note that translation on previous version of Chrome (100 and below) might have only partial support in banner notifications.
->
-> Due to MV3 current limitation, the service-worker is maintained awake through periodic messaging on active tab, if no tab is active in the past 5 minutes, service worker and associated functionalities might suspend until wake events.
+This extension is distributed through GitHub Releases as an unpacked Chrome extension zip.
 
-## Prerequisites
+1. Download the latest `synology-torrent-router-*-chrome-extension.zip` from the GitHub Releases page.
+2. Extract the zip to a permanent folder, such as:
+   `C:\Users\<you>\Extensions\synology-torrent-router`
+3. Open Chrome and go to:
+   `chrome://extensions`
+4. Turn on `Developer mode`.
+5. Click `Load unpacked`.
+6. Select the extracted folder that contains `manifest.json`.
+7. Pin the extension if you want quick access.
 
-- npm >=7.10.0
-- node >=16.0.0
+Chrome loads unpacked extensions from the extracted folder. If you delete or move that folder, Chrome will no longer be able to run the extension.
 
-## Install
+More detailed setup notes are in [docs/manual-install.md](docs/manual-install.md).
+Publisher notes are in [docs/github-release-publishing.md](docs/github-release-publishing.md).
+
+## Basic Setup
+
+1. Open the extension options or panel.
+2. Go to `Connection`.
+3. Configure your Synology NAS address, such as `https://192.168.x.x:5001`.
+4. Approve Chrome's host-access prompt for your NAS when asked.
+5. Test login.
+6. Go to `Downloads > Torrent Router`.
+7. Configure destination preset folders.
+8. On a supported tracker page, click a torrent download link and choose the destination.
+
+## Supported Sites
+
+The public build includes default content-script coverage for:
+
+- IPTorrents
+- TorrentLeech
+- MyAnonamouse
+
+Custom tracker hosts can be added in settings, but full dynamic injection for arbitrary custom tracker pages may require a future release.
+
+## Privacy
+
+The extension does not run a hosted backend service. NAS settings, destination presets, and preferences are stored locally in Chrome extension storage. Torrent payloads are fetched only after a user clicks a supported download link and are sent only to the user's configured Synology Download Station.
+
+See [docs/privacy-policy.md](docs/privacy-policy.md).
+
+## Important Limits
+
+- This extension is for content you are authorized to access.
+- It does not scrape trackers.
+- It does not bypass login, 2FA, CAPTCHA, paywalls, or access controls.
+- It does not automate content discovery.
+- It does not provide torrent content.
+- v1 is focused on local LAN Synology Download Station use.
+
+## Build From Source
+
+Requirements:
+
+- Node.js 20.19 or newer
+- pnpm 10.18 or newer, usually through Corepack
+
+Install dependencies:
 
 ```sh
-npm install
+corepack enable
+corepack pnpm install --frozen-lockfile
 ```
 
-## Usage
-
-To start the dev server (hot reload popup and service worker, but not content script)
+Build the unpacked extension:
 
 ```sh
-npm run start
+corepack pnpm run build:extension
 ```
 
-To build for production
+The unpacked extension is written to:
+
+```text
+build/
+```
+
+Create a release zip:
+
+```powershell
+corepack pnpm run package:github
+```
+
+Run tests:
 
 ```sh
-npm run build
+corepack pnpm run test:unit
 ```
 
-See [package.json](https://github.com/dvcol/synology-download/blob/main/package.json) for other useful scripts.
+## Credits
 
-## Run tests
+This project is based on [`dvcol/synology-download`](https://github.com/dvcol/synology-download), which is MIT licensed. The upstream copyright and license notice are preserved in [LICENSE](LICENSE).
 
-```sh
-npm run test:unit
-```
+This project is not affiliated with Synology Inc., Google, Chrome, dvcol, or any torrent tracker.
 
-## Author
+## License
 
-* Github: [@dvcol](https://github.com/dvcol)
-
-## 🤝 Contributing
-
-Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](https://github.com/dvcol/synology-download/issues).
-
-## Show your support
-
-Give a ⭐️ if this project helped you!
-
- <a href="https://paypal.me/dvcol/5" target="_blank">
-    <img alt="donate" src="https://img.shields.io/badge/Donate%20€-PayPal-brightgreen.svg" />
- </a>
-  
-## Download
-
-* [Github Releases](https://github.com/dvcol/synology-download/releases)
-* [Download Station (client for Synology NAS)](https://chrome.google.com/webstore/detail/download-station-client-f/ebbdkledlkjpgbbmmopgbnnjmklnkcef)
-
- <a href="https://chrome.google.com/webstore/detail/download-station-client-f/ebbdkledlkjpgbbmmopgbnnjmklnkcef" target="_blank">
-    <img alt="chrome-webstore" src="https://dvcol.github.io/synology-download/public/chrome-store.png" />
- </a>
-
-
-## 📝 License
-
-This project is [MIT](https://github.com/dvcol/synology-download/blob/master/LICENSE) licensed.
-
-***
-_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
+MIT

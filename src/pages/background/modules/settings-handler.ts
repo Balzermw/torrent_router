@@ -9,7 +9,7 @@ import { setSettings } from '../../../store/actions/settings.action';
 import { settingsSlice } from '../../../store/slices/settings.slice';
 import { buildContextMenu } from '../../../utils/chrome/chrome-context.utils';
 import { setBadgeBackgroundColor } from '../../../utils/chrome/chrome.utils';
-import { localGet, syncGet } from '../../../utils/webex.utils';
+import { localGet } from '../../../utils/webex.utils';
 
 async function dispatchRestoreSettings(store: StoreOrProxy, settings: SettingsSlice) {
   LoggerService.debug(`Restoring settings from chrome '${settings?.sync?.mode ?? SyncSettingMode.sync}' storage...`, settings);
@@ -34,11 +34,7 @@ async function dispatchRestoreSettings(store: StoreOrProxy, settings: SettingsSl
 /** Restore extension settings */
 export function restoreSettings(store: StoreOrProxy) {
   return localGet<SettingsSlice>(settingsSlice.name).pipe(
-    switchMap((settings) => {
-      if (settings?.sync?.mode === SyncSettingMode.local) return of(settings);
-      return syncGet<SettingsSlice>(settingsSlice.name);
-    }),
-    switchMap(settings => from(dispatchRestoreSettings(store, settings))),
+    switchMap(settings => from(dispatchRestoreSettings(store, settings ?? defaultSettings))),
     finalize(() => LoggerService.debug('Settings restored.')),
     catchError((err) => {
       LoggerService.error('Setting slice failed to restore.', err);

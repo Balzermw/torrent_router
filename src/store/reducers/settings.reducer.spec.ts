@@ -9,6 +9,7 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultConnection, defaultDownloads, defaultSettings, SyncSettingMode } from '../../models/settings.model';
+import { defaultTorrentRouterSettings } from '../../models/torrent-router.model';
 
 vi.mock('../../utils/webex.utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../utils/webex.utils')>();
@@ -38,6 +39,7 @@ const {
   removeFrom,
   syncConnectionReducer,
   syncInterceptReducer,
+  syncTorrentRouterReducer,
   syncAdvancedLoggingReducer,
   setBadgeReducer,
   setSyncSettingsReducer,
@@ -154,6 +156,20 @@ describe('settings.reducer', () => {
     it('should keep all items when predicate matches everything', () => {
       const result = removeFrom<ContextMenu, 'menus'>(baseState, 'menus', () => true);
       expect(result.menus).toHaveLength(baseState.menus.length);
+    });
+  });
+
+  describe('syncTorrentRouterReducer', () => {
+    it('preserves tracker destination history when syncing partial settings', () => {
+      baseState.torrentRouter.destinationHistory = {
+        iptorrents: ['/volume1/tv'],
+      };
+
+      const result = syncTorrentRouterReducer(baseState, makeAction({ hosts: ['iptorrents.com'] }));
+
+      expect(result.torrentRouter.destinationHistory).toEqual({ iptorrents: ['/volume1/tv'] });
+      expect(localSet).toHaveBeenCalled();
+      expect(syncSet).not.toHaveBeenCalled();
     });
   });
 
@@ -297,6 +313,22 @@ describe('settings.reducer', () => {
       saveSettings(baseState);
       expect(syncSet).toHaveBeenCalled();
       expect(localSet).toHaveBeenCalled();
+    });
+
+    it('should redact credentials and torrent router paths from sync storage', () => {
+      baseState.sync.mode = SyncSettingMode.sync;
+      baseState.connection.password = 'secret';
+      baseState.connection.otp_code = '123456';
+      baseState.connection.device_id = 'device-id';
+      baseState.torrentRouter.presets[0].path = '/volume1/tv';
+
+      saveSettings(baseState);
+
+      const syncedSettings = vi.mocked(syncSet).mock.calls[0][1] as SettingsSlice;
+      expect(syncedSettings.connection.password).toBe('');
+      expect(syncedSettings.connection.otp_code).toBe('');
+      expect(syncedSettings.connection.device_id).toBe('');
+      expect(syncedSettings.torrentRouter).toEqual(defaultTorrentRouterSettings);
     });
   });
 });

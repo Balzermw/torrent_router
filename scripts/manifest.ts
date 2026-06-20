@@ -7,15 +7,30 @@ const Endpoints = {
   Dev: 'http://localhost' as const,
 } as const;
 
+const defaultTrackerOrigins = [
+  '*://iptorrents.com/*',
+  '*://*.iptorrents.com/*',
+  '*://torrentleech.org/*',
+  '*://*.torrentleech.org/*',
+  '*://torrentleech.cc/*',
+  '*://*.torrentleech.cc/*',
+  '*://myanonamouse.net/*',
+  '*://*.myanonamouse.net/*',
+];
+
 function getExtensionPages(_dev: boolean, _port: number) {
   if (_dev && _port) return `script-src 'self' ${Endpoints.Dev}:${_port}; object-src 'self' ${Endpoints.Dev}:${_port}`;
   return "script-src 'self'; object-src 'self'";
 }
 
 function getHostPermissions(_dev: boolean, _port: number) {
-  const permissions: string[] = ['http://*/*', 'https://*/*'];
+  const permissions: string[] = _dev ? ['http://*/*', 'https://*/*'] : [...defaultTrackerOrigins];
   if (_dev) permissions.push(`${Endpoints.Dev}:${_port}/*`, `${Endpoints.Dev}:${contentPort}/*`);
   return permissions;
+}
+
+function getContentScriptMatches(_dev: boolean) {
+  return _dev ? ['http://*/*', 'https://*/*'] : defaultTrackerOrigins;
 }
 
 function getHtmlPath(page: string, _dev: boolean) {
@@ -24,7 +39,7 @@ function getHtmlPath(page: string, _dev: boolean) {
 
 export const manifest = {
   manifest_version: 3,
-  name: 'Download Station (client for Synology NAS)',
+  name: 'Synology Torrent Router',
   version: pkg.version,
   description: pkg.description,
   default_locale: 'en',
@@ -41,7 +56,7 @@ export const manifest = {
     type: 'module' as const,
   },
   action: {
-    default_title: 'Synology Download Station',
+    default_title: 'Synology Torrent Router',
     default_popup: getHtmlPath('popup', isDev),
     default_icon: {
       16: 'assets/icons/icon-16.png',
@@ -56,16 +71,17 @@ export const manifest = {
   },
   content_scripts: [
     {
-      matches: ['http://*/*', 'https://*/*'],
+      matches: getContentScriptMatches(isDev),
       js: ['scripts/contentScript.js'],
     },
   ],
-  permissions: ['scripting', 'contextMenus', 'notifications', 'storage', 'tabs', 'downloads', 'downloads.open', 'clipboardRead', 'sidePanel'],
+  permissions: ['scripting', 'contextMenus', 'notifications', 'storage', 'tabs', 'downloads', 'sidePanel'],
   host_permissions: getHostPermissions(isDev, port),
+  optional_host_permissions: ['http://*/*', 'https://*/*'],
   web_accessible_resources: [
     {
       resources: isDev ? ['*.html', '*preamble.js'] : ['*.html'],
-      matches: ['<all_urls>'],
+      matches: isDev ? ['<all_urls>'] : defaultTrackerOrigins,
     },
   ],
   content_security_policy: {

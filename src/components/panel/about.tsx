@@ -3,9 +3,7 @@ import type { FC } from 'react';
 
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LiveHelpIcon from '@mui/icons-material/LiveHelp';
-import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
 import SecurityIcon from '@mui/icons-material/Security';
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import { Button, Card, CardActions, CardContent, CardHeader, Chip, Stack, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 
@@ -86,17 +84,18 @@ export const About: FC<{
         <Typography variant="body2" color="text.secondary">
           {i18n('contribute_body')}
         </Typography>
+
+        <Typography gutterBottom variant="h5" component="div" sx={{ mt: 2 }}>
+          {i18n('credits_title')}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" component="p" sx={{ mb: 1 }}>
+          {i18n('credits_body_p1')}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" component="p">
+          {i18n('credits_body_p2')}
+        </Typography>
       </CardContent>
       <CardActions sx={{ justifyContent: 'space-around', p: '0 1rem 1rem' }}>
-        <Button
-          variant="outlined"
-          color="info"
-          onClick={async () => createTab({ url: AppLinks.Webstore })}
-          startIcon={<LocalGroceryStoreIcon />}
-          sx={{ flex: '0 1 8rem' }}
-        >
-          {i18n('button_store')}
-        </Button>
         <Button
           variant="outlined"
           color="info"
@@ -126,12 +125,12 @@ export const About: FC<{
         </Button>
         <Button
           variant="outlined"
-          color="success"
-          onClick={async () => createTab({ url: AppLinks.Paypal })}
-          startIcon={<VolunteerActivismIcon />}
+          color="info"
+          onClick={async () => createTab({ url: AppLinks.Upstream })}
+          startIcon={<GitHubIcon />}
           sx={{ flex: '0 1 8rem' }}
         >
-          {i18n('button_donate')}
+          {i18n('button_upstream')}
         </Button>
       </CardActions>
     </Card>

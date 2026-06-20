@@ -1,6 +1,6 @@
 {
   "panel__about__title": {
-    "message": "关于下载站（适用于群晖 NAS）"
+    "message": "About Synology Torrent Router"
   },
   "panel__about__chip_version": {
     "message": "版本"
@@ -15,10 +15,10 @@
     "message": "描述"
   },
   "panel__about__description_body_p1": {
-    "message": "群晖下载是一个基于React的Chrome扩展程序，可直接从浏览器管理群晖下载站任务。它允许从此弹出窗口直接进行下载任务的查阅、创建、删除、编辑和暂停。它还允许通过任何磁力链接或浏览器内的上下文菜单快速创建任务。"
+    "message": "Synology Torrent Router routes user-selected, authorized torrent and magnet downloads to the user configured Synology Download Station."
   },
   "panel__about__description_body_p2": {
-    "message": "有关当前支持的功能的更多信息，请参阅下面的链接中的GitHub页面。"
+    "message": "The extension does not scrape trackers, bypass login or CAPTCHA, automate content discovery, or provide access to unauthorized content."
   },
   "panel__about__limitations_title": {
     "message": "限制"
@@ -27,7 +27,7 @@
     "message": "由于缺乏官方API文档，目前不支持快速连接登录。"
   },
   "panel__about__limitations_body_p2": {
-    "message": "目前，快速操作菜单仅支持磁力链接。"
+    "message": "The public build starts with default tracker coverage for IPTorrents, TorrentLeech, and MyAnonamouse. Custom tracker support may require site access and future dynamic injection."
   },
   "panel__about__limitations_body_p3": {
     "message": "请注意，先前版本的Chrome（100及以下）上的翻译可能只支持横幅通知的部分功能。"
@@ -39,13 +39,10 @@
     "message": "贡献"
   },
   "panel__about__contribute_body": {
-    "message": "如果您希望支持此应用程序的开发，您可以进行小额捐赠，在Web商店中留下评论，为代码库做出贡献，报告问题或在GitHub上建议新功能。使用下面的链接进行支持。"
-  },
-  "panel__about__button_donate": {
-    "message": "捐赠"
+    "message": "Report issues, suggest features, or review source code through the project links below."
   },
   "panel__about__button_contribute": {
-    "message": "贡献"
+    "message": "source"
   },
   "panel__about__button_support": {
     "message": "支持"
@@ -53,7 +50,16 @@
   "panel__about__button_privacy": {
     "message": "隐私"
   },
-  "panel__about__button_store": {
-    "message": "商店"
+  "panel__about__credits_title": {
+    "message": "Credits and affiliation"
+  },
+  "panel__about__credits_body_p1": {
+    "message": "This project is based on dvcol/synology-download, which is MIT licensed. The upstream copyright and license notice are preserved."
+  },
+  "panel__about__credits_body_p2": {
+    "message": "This extension is not affiliated with Synology Inc., Google, Chrome, dvcol, or any torrent tracker."
+  },
+  "panel__about__button_upstream": {
+    "message": "upstream"
   }
 }

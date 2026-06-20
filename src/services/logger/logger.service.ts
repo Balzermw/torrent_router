@@ -68,6 +68,40 @@ export class LoggerService extends BaseLoggerService {
     void this.store?.dispatch(addLogHistory({ log, max: this.historyMax }));
   }
 
+  private static serializeParam(param: unknown): string {
+    if (param instanceof Error) {
+      return JSON.stringify({
+        name: param.name,
+        message: param.message,
+        stack: param.stack,
+      });
+    }
+
+    if (typeof File !== 'undefined' && param instanceof File) {
+      return JSON.stringify({
+        name: param.name,
+        size: param.size,
+        type: param.type,
+      });
+    }
+
+    if (param instanceof ArrayBuffer) {
+      return JSON.stringify({ byteLength: param.byteLength });
+    }
+
+    if (ArrayBuffer.isView(param)) {
+      return JSON.stringify({ byteLength: param.byteLength });
+    }
+
+    if (typeof param === 'string') return param;
+
+    try {
+      return JSON.stringify(param);
+    } catch {
+      return String(param);
+    }
+  }
+
   /**
    * Capture info logs and above and forward them to the background
    * @param level the log level of the call
@@ -79,7 +113,13 @@ export class LoggerService extends BaseLoggerService {
     if (!this.history || !this.store) return;
     if (level < LoggingLevel.info) return;
 
-    const log: Log = { timestamp: new Date().toISOString(), level, source: this.source, value: value?.toString() ?? 'undefined', params: params?.toString() };
+    const log: Log = {
+      timestamp: new Date().toISOString(),
+      level,
+      source: this.source,
+      value: value?.toString() ?? 'undefined',
+      params: params?.map(param => this.serializeParam(param)).join('\n'),
+    };
 
     if (this.isProxy) {
       return sendMessage<Log>({

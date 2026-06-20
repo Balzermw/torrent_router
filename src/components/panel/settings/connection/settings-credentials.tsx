@@ -23,6 +23,7 @@ import { QueryService } from '../../../../services/query/query.service';
 import { syncConnection } from '../../../../store/actions/settings.action';
 import { getConnection, urlReducer } from '../../../../store/selectors/settings.selector';
 import { getLogged } from '../../../../store/selectors/state.selector';
+import { ensureOriginPermission } from '../../../../utils/chrome/chrome-permissions.utils';
 import { createTab } from '../../../../utils/chrome/chrome.utils';
 import { useDebounceObservable } from '../../../../utils/hooks.utils';
 import { before } from '../../../../utils/rxjs.utils';
@@ -146,6 +147,16 @@ export const SettingsCredentials: FC = () => {
   ) => {
     const baseUrl = buildUrl(data, _type === 'login_test' ? 'test' : 'login');
     if (!baseUrl) return;
+    const granted = await ensureOriginPermission(baseUrl);
+    if (!granted) {
+      setLoginError({ ...loginError, [_type === 'login_test' ? 'test' : 'login']: true });
+      NotificationService.error({
+        title: i18n(`${_type}__fail`),
+        message: i18n('host_permission_required'),
+        contextMessage: baseUrl,
+      });
+      return;
+    }
     if (!hasInfo) data.authVersion = await queryInfo(baseUrl);
     return query
       .bind(QueryService)(data, baseUrl)
@@ -201,7 +212,16 @@ export const SettingsCredentials: FC = () => {
     return loginError[_type] ? 'error' : 'success';
   };
 
-  const onSave = (data: ConnectionSettings) => {
+  const onSave = async (data: ConnectionSettings) => {
+    const baseUrl = buildUrl(data, 'login');
+    if (baseUrl && !(await ensureOriginPermission(baseUrl))) {
+      NotificationService.error({
+        title: i18n('save', 'common', 'buttons'),
+        message: i18n('host_permission_required'),
+        contextMessage: baseUrl,
+      });
+      return;
+    }
     dispatch(syncConnection(data));
     reset(data, { keepIsSubmitted: true, keepSubmitCount: true });
   };
@@ -546,7 +566,7 @@ export const SettingsCredentials: FC = () => {
             buttonProps={{ variant: 'outlined', color: 'secondary', sx: { flex: '0 1 8rem' }, startIcon: <SettingsBackupRestoreIcon /> }}
             onDialogConfirm={() => reset(defaultConnection)}
           />
-          <Button variant="outlined" color={onSubmitColor()} sx={{ width: '5rem' }} type="submit" onClick={() => onSave(getValues())}>
+          <Button variant="outlined" color={onSubmitColor()} sx={{ width: '5rem' }} type="submit" onClick={() => void onSave(getValues())}>
             {i18n('save', 'common', 'buttons')}
           </Button>
         </Stack>

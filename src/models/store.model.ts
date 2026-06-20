@@ -8,6 +8,7 @@ import type { AdvancedSettings, ConnectionSettings, ContentSettings, DownloadSet
 import type { InfoResponse } from './synology.model';
 import type { ContentTab } from './tab.model';
 import type { Task, TaskComplete, TaskFile, TaskForm, TaskStatistics } from './task.model';
+import type { TorrentRouterSettings } from './torrent-router.model';
 
 export interface StateSlice {
   logged: boolean;
@@ -77,6 +78,7 @@ export interface SettingsSlice {
   sync: SyncSettings;
   scrape: ScrapeSettings;
   content: ContentSettings;
+  torrentRouter: TorrentRouterSettings;
 }
 
 export interface RootSlice {

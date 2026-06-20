@@ -7,6 +7,7 @@ import type { QueryAutoLoginOptions } from './query.model';
 import type { ScrapedContents, ScrapedPage } from './scraped-content.model';
 import type { SynologyQueryPayload } from './synology.model';
 import type { TaskForm } from './task.model';
+import type { TorrentUploadPayload } from './torrent-router.model';
 
 import OpenOptions = chrome.sidePanel.OpenOptions;
 
@@ -37,6 +38,7 @@ export enum ChromeMessageType {
   scrap = 'scrap',
   scraped = 'scraped',
   scrapeDownload = 'scrapeDownload',
+  torrentUpload = 'torrentUpload',
 }
 
 export interface ScrapeDownloadPayload {
@@ -103,7 +105,8 @@ export type ChromeMessagePayload
     | ScrapedContentsPayload
     | OpenPopupPayload
     | OpenPanelPayload
-    | ScrapeDownloadPayload;
+    | ScrapeDownloadPayload
+    | TorrentUploadPayload;
 
 /**
  * Message interface for communication between content & background

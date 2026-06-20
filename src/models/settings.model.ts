@@ -19,6 +19,7 @@ import { NavbarButtonType } from './navbar.model';
 import { NotificationLevel } from './notification.model';
 import { defaultTabs, TabTemplate } from './tab.model';
 import { TaskStatus } from './task.model';
+import { defaultTorrentRouterSettings } from './torrent-router.model';
 
 export enum SettingHeader {
   connection = 'connection',
@@ -408,7 +409,7 @@ export interface SyncSettings {
 }
 
 export const defaultSyncSettings: SyncSettings = {
-  mode: SyncSettingMode.sync,
+  mode: SyncSettingMode.local,
 };
 
 export interface ScrapeSettings {
@@ -449,4 +450,5 @@ export const defaultSettings: SettingsSlice = {
   sync: defaultSyncSettings,
   scrape: defaultScrapeSettings,
   content: defaultContentSettings,
+  torrentRouter: defaultTorrentRouterSettings,
 };

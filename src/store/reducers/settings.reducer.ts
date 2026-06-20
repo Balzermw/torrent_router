@@ -4,9 +4,11 @@ import type { ContextMenu, QuickMenu } from '../../models/menu.model';
 import type { AdvancedLogging, AdvancedSettings, ConnectionSettings, DownloadSettings, DownloadsIntercept, GlobalSettings, NotificationSettings, SyncSettings } from '../../models/settings.model';
 import type { SettingsSlice } from '../../models/store.model';
 import type { ContentTab } from '../../models/tab.model';
+import type { TorrentRouterSettings } from '../../models/torrent-router.model';
 
 import { defaultAdvancedLogging, defaultAdvancedSettings, defaultConnection, defaultDownloads, SyncSettingMode } from '../../models/settings.model';
 import { SettingsSliceName } from '../../models/store.model';
+import { defaultTorrentRouterSettings } from '../../models/torrent-router.model';
 import { LoggerService } from '../../services/logger/logger.service';
 import { setBadgeBackgroundColor } from '../../utils/chrome/chrome.utils';
 import { localSet, syncSet } from '../../utils/webex.utils';
@@ -18,7 +20,17 @@ function localSettings(settings: SettingsSlice): void {
 
 function syncSettings(settings: SettingsSlice): void {
   // TODO : move to thunk ?
-  syncSet<SettingsSlice>(SettingsSliceName, settings).subscribe(() => LoggerService.debug('Setting chrome sync success', settings));
+  const safeSettings: SettingsSlice = {
+    ...settings,
+    connection: {
+      ...settings.connection,
+      password: '',
+      otp_code: '',
+      device_id: '',
+    },
+    torrentRouter: defaultTorrentRouterSettings,
+  };
+  syncSet<SettingsSlice>(SettingsSliceName, safeSettings).subscribe(() => LoggerService.debug('Setting chrome sync success', safeSettings));
 }
 
 export function saveSettings(settings: SettingsSlice): void {
@@ -41,6 +53,21 @@ export function syncInterceptReducer(oldSettings: SettingsSlice, { payload }: Pa
   const newSettings = setNestedReducer(oldSettings, newDownloads, 'downloads');
   syncNestedReducer<DownloadSettings>(newSettings, newDownloads, 'downloads');
   return newSettings;
+}
+
+export function syncTorrentRouterReducer(oldSettings: SettingsSlice, { payload }: PayloadAction<Partial<TorrentRouterSettings>>): SettingsSlice {
+  const nextSettings = setNestedReducer<TorrentRouterSettings>(
+    oldSettings,
+    {
+      ...payload,
+      presets: payload.presets ?? oldSettings.torrentRouter?.presets ?? defaultTorrentRouterSettings.presets,
+      hosts: payload.hosts ?? oldSettings.torrentRouter?.hosts ?? defaultTorrentRouterSettings.hosts,
+      destinationHistory: payload.destinationHistory ?? oldSettings.torrentRouter?.destinationHistory ?? defaultTorrentRouterSettings.destinationHistory,
+    },
+    'torrentRouter',
+  );
+  localSettings(nextSettings);
+  return nextSettings;
 }
 
 export function syncAdvancedLoggingReducer(oldSettings: SettingsSlice, { payload }: PayloadAction<Partial<AdvancedLogging>>): SettingsSlice {

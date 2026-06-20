@@ -16,6 +16,7 @@ import { store } from '../../../store/store';
 import { getThemeFromStore, subscribeToTheme } from '../../../themes/media-query';
 import { ContentTaskDialog } from './content-task-dialog';
 import { QuickMenuDialog } from './quick-menu-dialog';
+import { TorrentRouterDialog } from './torrent-router-dialog';
 
 export function ContentApp({
   storeOrProxy,
@@ -49,6 +50,7 @@ export function ContentApp({
               <NotificationStack maxSnack={5} container={container} />
               <QuickMenuDialog container={container} />
               <ContentTaskDialog container={container} />
+              <TorrentRouterDialog container={container} />
             </ThemeProvider>
           </CacheProvider>
         </ContainerContextProvider>

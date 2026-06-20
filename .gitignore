@@ -9,6 +9,10 @@
 # production
 /build
 /dist
+/store-artifacts
+
+# alternate package-manager lockfiles
+/package-lock.json
 
 # misc
 .DS_Store

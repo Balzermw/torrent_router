@@ -14,6 +14,7 @@ import {
   Protocol,
   ThemeMode,
 } from './settings.model';
+import { defaultTorrentRouterSettings } from './torrent-router.model';
 
 describe('settings.model', () => {
   describe('defaults', () => {
@@ -67,6 +68,7 @@ describe('settings.model', () => {
       expect(defaultSettings.global).toBe(defaultGlobal);
       expect(defaultSettings.downloads).toBe(defaultDownloads);
       expect(defaultSettings.advanced).toBe(defaultAdvancedSettings);
+      expect(defaultSettings.torrentRouter).toBe(defaultTorrentRouterSettings);
     });
   });
 });

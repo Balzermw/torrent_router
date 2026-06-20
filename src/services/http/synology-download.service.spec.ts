@@ -1,4 +1,4 @@
-/* eslint-disable ts/no-unsafe-member-access, ts/no-unsafe-argument */
+/* eslint-disable ts/no-unsafe-assignment, ts/no-unsafe-call, ts/no-unsafe-member-access, ts/no-unsafe-argument, ts/no-unnecessary-type-assertion */
 import { firstValueFrom, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -228,6 +228,32 @@ describe('synologyDownloadService', () => {
 
       const params = _doSpy.mock.calls[0][1];
       expect(params).not.toHaveProperty('uri');
+    });
+
+    it('should upload torrent files as multipart form data', async () => {
+      const torrent = new File(['torrent-data'], 'release.torrent', { type: 'application/x-bittorrent' });
+
+      await firstValueFrom(
+        service.createTask({
+          destination: '/downloads',
+          torrent,
+        } as any),
+      );
+
+      const options = doSpy.mock.calls[0][0] as any;
+      expect(options).toMatchObject({
+        api: 'SYNO.DownloadStation.Task',
+        endpoint: 'task.cgi',
+        method: 'POST',
+        params: { method: 'create' },
+        version: '1',
+      });
+      expect(options.body).toBeInstanceOf(FormData);
+      expect(options.body.get('destination')).toBe('/downloads');
+      const uploaded = options.body.get('file') as File;
+      expect(uploaded.name).toBe('release.torrent');
+      expect(await uploaded.text()).toBe('torrent-data');
+      expect(doSpy.mock.calls[0][1]).toBe(true);
     });
   });
 
