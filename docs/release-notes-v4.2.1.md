@@ -2,6 +2,14 @@
 
 Initial public GitHub release candidate for manual Chrome installation.
 
+## Fork And Attribution
+
+This build is a fork of [`dvcol/synology-download`](https://github.com/dvcol/synology-download), an MIT-licensed Synology Download Station Chrome extension. The original project provides the existing Synology auth/task UI and much of the extension foundation.
+
+I built this fork because the torrent-download routing behavior I needed was not working reliably in my tracker workflow. Some tracker download clicks could save an HTML page, such as `index.html`, instead of a usable authenticated `.torrent` file. This release adds a Torrent Router flow that captures user-clicked torrent responses, validates the payload, prompts for a Synology destination folder, and uploads the torrent to Download Station.
+
+Attribution to the upstream project is preserved in the repository license and documentation. This fork is not affiliated with the upstream maintainer, Synology, Chrome, Google, or any torrent tracker.
+
 ## Highlights
 
 - Adds Torrent Router flow for user-selected private-tracker `.torrent` downloads.

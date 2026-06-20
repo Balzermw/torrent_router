@@ -4,6 +4,14 @@ Synology Torrent Router is a Chrome MV3 extension that routes user-selected, aut
 
 It is intended for local/home NAS use. When you click a supported torrent download link, the extension asks for a destination folder, validates that the tracker returned a real `.torrent` file, and uploads it to Download Station.
 
+## Fork And Attribution
+
+This project is a fork of [`dvcol/synology-download`](https://github.com/dvcol/synology-download). The original project provides the Synology Download Station UI, authentication flow, task management, and much of the extension foundation.
+
+This fork exists because the torrent-download routing flow was not working reliably for my tracker workflow. In particular, some private-tracker download clicks could save an HTML page, such as `index.html`, instead of a usable `.torrent` file with the active browser session/auth context. This fork adds the Torrent Router flow that captures user-clicked torrent responses, validates that the payload is real bencoded torrent data, prompts for a Synology destination folder, and uploads the torrent to Download Station.
+
+The upstream project is MIT licensed, and attribution is preserved in [LICENSE](LICENSE). This fork is not affiliated with the upstream maintainer, Synology, Chrome, Google, or any torrent tracker.
+
 ## Features
 
 - Send user-selected `.torrent` files to Synology Download Station.
@@ -111,7 +119,7 @@ corepack pnpm run test:unit
 
 ## Credits
 
-This project is based on [`dvcol/synology-download`](https://github.com/dvcol/synology-download), which is MIT licensed. The upstream copyright and license notice are preserved in [LICENSE](LICENSE).
+This project is based on [`dvcol/synology-download`](https://github.com/dvcol/synology-download), which is MIT licensed. Thanks and attribution go to the upstream project for the original Synology Download Station Chrome extension foundation. The upstream copyright and license notice are preserved in [LICENSE](LICENSE).
 
 This project is not affiliated with Synology Inc., Google, Chrome, dvcol, or any torrent tracker.
 
