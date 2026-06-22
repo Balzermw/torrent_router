@@ -8,7 +8,7 @@ Use this guide when installing Synology Torrent Router without the Chrome Web St
 2. Download the latest file named like:
 
    ```text
-   synology-torrent-router-4.2.2-chrome-extension.zip
+   synology-torrent-router-4.2.3-chrome-extension.zip
    ```
 
 3. Do not load the zip directly in Chrome. Extract it first.

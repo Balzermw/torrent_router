@@ -247,6 +247,7 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
                 disabled={loading}
                 onChange={event => onFavoriteChange(event.target.value)}
                 SelectProps={{ native: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               >
                 <option value="">Choose favorite</option>
                 {favoriteSuggestions.map(favorite => (
@@ -266,6 +267,7 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
               disabled={loading}
               onChange={event => onPresetChange(event.target.value as TorrentRouterPresetId)}
               SelectProps={{ native: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             >
               {presets.map(preset => (
                 <option key={preset.id} value={preset.id}>
@@ -317,6 +319,7 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
                 disabled={loading}
                 onChange={event => setDestination(event.target.value)}
                 SelectProps={{ native: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               >
                 <option value="">Choose recent path</option>
                 {trackerSuggestions.map(path => (

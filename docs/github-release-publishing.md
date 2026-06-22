@@ -29,7 +29,7 @@ Use this when publishing Synology Torrent Router as a manual Chrome extension do
 
    ```powershell
    git push -u origin HEAD:main
-   git push origin v4.2.2
+   git push origin v4.2.3
    ```
 
 ## Build The Download Zip
@@ -45,7 +45,7 @@ corepack pnpm run package:github
 The release asset is created at:
 
 ```text
-store-artifacts\synology-torrent-router-4.2.2-chrome-extension.zip
+store-artifacts\synology-torrent-router-4.2.3-chrome-extension.zip
 ```
 
 ## Create The GitHub Release
@@ -56,25 +56,25 @@ store-artifacts\synology-torrent-router-4.2.2-chrome-extension.zip
 4. Create a new tag:
 
    ```text
-   v4.2.2
+   v4.2.3
    ```
 
 5. Set the release title:
 
    ```text
-   Synology Torrent Router v4.2.2
+   Synology Torrent Router v4.2.3
    ```
 
 6. Paste the notes from:
 
    ```text
-   docs\release-notes-v4.2.2.md
+   docs\release-notes-v4.2.3.md
    ```
 
 7. Upload this asset:
 
    ```text
-   store-artifacts\synology-torrent-router-4.2.2-chrome-extension.zip
+   store-artifacts\synology-torrent-router-4.2.3-chrome-extension.zip
    ```
 
 8. Publish the release.
@@ -83,7 +83,7 @@ store-artifacts\synology-torrent-router-4.2.2-chrome-extension.zip
 
 Tell users to:
 
-1. Download the `synology-torrent-router-4.2.2-chrome-extension.zip` release asset.
+1. Download the `synology-torrent-router-4.2.3-chrome-extension.zip` release asset.
 2. Extract it to a permanent folder.
 3. Open `chrome://extensions`.
 4. Enable `Developer mode`.
@@ -102,11 +102,11 @@ If GitHub CLI is installed and authenticated, you can publish from PowerShell:
 
 ```powershell
 git push -u origin HEAD:main
-git push origin v4.2.2
-gh release create v4.2.2 `
-  store-artifacts\synology-torrent-router-4.2.2-chrome-extension.zip `
-  --title "Synology Torrent Router v4.2.2" `
-  --notes-file docs\release-notes-v4.2.2.md
+git push origin v4.2.3
+gh release create v4.2.3 `
+  store-artifacts\synology-torrent-router-4.2.3-chrome-extension.zip `
+  --title "Synology Torrent Router v4.2.3" `
+  --notes-file docs\release-notes-v4.2.3.md
 ```
 
-The local `v4.2.2` tag should already point at the release commit. If it does not exist locally, create it only after the release commit is ready.
+The local `v4.2.3` tag should already point at the release commit. If it does not exist locally, create it only after the release commit is ready.
