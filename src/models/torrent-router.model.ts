@@ -12,11 +12,20 @@ export interface DestinationPreset {
   hints: string[];
 }
 
+export interface DestinationFavorite {
+  id: string;
+  label: string;
+  path: string;
+  presetId?: TorrentRouterPresetId;
+  tracker?: string;
+}
+
 export interface TorrentRouterSettings {
   enabled: boolean;
   hosts: string[];
   presets: DestinationPreset[];
   destinationHistory: Record<string, string[]>;
+  favorites: DestinationFavorite[];
 }
 
 export type TorrentRequestMethod = 'GET' | 'POST';
@@ -98,4 +107,5 @@ export const defaultTorrentRouterSettings: TorrentRouterSettings = {
   hosts: ['iptorrents.com', 'torrentleech.org', 'myanonamouse.net'],
   presets: defaultDestinationPresets,
   destinationHistory: {},
+  favorites: [],
 };

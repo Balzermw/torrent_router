@@ -37,6 +37,7 @@ import { NotificationService } from '../notification/notification.service';
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
 const i18n = useI18n('common', 'error');
+const deleteTaskBatchSize = 80;
 
 export class QueryService {
   private static source: ServiceInstance;
@@ -702,15 +703,41 @@ export class QueryService {
     );
   }
 
+  private static taskDeleteBatches(ids: Iterable<Task['id']>, batchSize = deleteTaskBatchSize): Task['id'][][] {
+    const batches: Task['id'][][] = [];
+    Array.from(new Set(ids))
+      .filter(Boolean)
+      .forEach((id) => {
+        const batch = batches.at(-1);
+        if (!batch || batch.length >= batchSize) batches.push([id]);
+        else batch.push(id);
+      });
+    return batches;
+  }
+
+  static deleteTasksByIds(ids: Iterable<Task['id']>, force = false): Observable<CommonResponse[]> {
+    const batches = this.taskDeleteBatches(ids);
+    if (!batches.length) return EMPTY;
+
+    return forkJoin(batches.map(batch => this.downloadClient.deleteTask(batch.join(','), force))).pipe(
+      this.loadingOperator(),
+      this.handleErrors,
+      tap(() => {
+        void this.store.dispatch(spliceTasks(batches.flat()));
+      }),
+      switchMap(responses => this.listTasks().pipe(map(() => responses.flat()))),
+    );
+  }
+
   static deleteAllTasks(ids: Set<Task['id']> = getTasksIdsByActionScope(this.store.getState()), force = false): Observable<CommonResponse[]> {
-    return ids?.size ? this.deleteTask(Array.from(ids).join(','), force) : EMPTY;
+    return ids?.size ? this.deleteTasksByIds(ids, force) : EMPTY;
   }
 
   static deleteFinishedAndErrorTasks(
     ids: Set<Task['id']> = getFinishedAnErrorTasksIdsByActionScope(this.store.getState()),
     force = false,
   ): Observable<CommonResponse[]> {
-    return ids?.size ? this.deleteTask(Array.from(ids).join(','), force) : EMPTY;
+    return ids?.size ? this.deleteTasksByIds(ids, force) : EMPTY;
   }
 
   static deleteFinishedTasks(

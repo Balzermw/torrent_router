@@ -63,6 +63,7 @@ export function syncTorrentRouterReducer(oldSettings: SettingsSlice, { payload }
       presets: payload.presets ?? oldSettings.torrentRouter?.presets ?? defaultTorrentRouterSettings.presets,
       hosts: payload.hosts ?? oldSettings.torrentRouter?.hosts ?? defaultTorrentRouterSettings.hosts,
       destinationHistory: payload.destinationHistory ?? oldSettings.torrentRouter?.destinationHistory ?? defaultTorrentRouterSettings.destinationHistory,
+      favorites: payload.favorites ?? oldSettings.torrentRouter?.favorites ?? defaultTorrentRouterSettings.favorites,
     },
     'torrentRouter',
   );

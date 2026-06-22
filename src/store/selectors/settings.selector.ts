@@ -103,6 +103,7 @@ export const getTorrentRouterSettings: (state: StoreState) => TorrentRouterSetti
     presets: setting?.torrentRouter?.presets ?? defaultTorrentRouterSettings.presets,
     hosts: setting?.torrentRouter?.hosts ?? defaultTorrentRouterSettings.hosts,
     destinationHistory: setting?.torrentRouter?.destinationHistory ?? defaultTorrentRouterSettings.destinationHistory,
+    favorites: setting?.torrentRouter?.favorites ?? defaultTorrentRouterSettings.favorites,
   }),
 );
 

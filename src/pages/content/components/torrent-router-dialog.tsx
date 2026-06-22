@@ -5,8 +5,10 @@ import type { DestinationPreset, TorrentCaptureRequest } from '../../../models/t
 
 import { zIndexMax } from '@dvcol/web-extension-utils';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Stack, TextField, Tooltip, Typography } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -15,7 +17,12 @@ import { TorrentRouterPresetId } from '../../../models/torrent-router.model';
 import { LoggerService } from '../../../services/logger/logger.service';
 import { NotificationService } from '../../../services/notification/notification.service';
 import { QueryService } from '../../../services/query/query.service';
-import { getTrackerDestinationSuggestions, rememberTrackerDestination } from '../../../services/torrent/torrent-router-history';
+import {
+  addDestinationFavorite,
+  getFavoriteDestinationSuggestions,
+  getTrackerDestinationSuggestions,
+  rememberTrackerDestination,
+} from '../../../services/torrent/torrent-router-history';
 import { redactTrackerUrl, submitTorrentCapture } from '../../../services/torrent/torrent-router.service';
 import { guessDestinationPreset } from '../../../services/torrent/tracker-adapters';
 import { syncTorrentRouter } from '../../../store/actions/settings.action';
@@ -26,6 +33,7 @@ import { torrentRouterDialog$ } from '../service/torrent-router-dialog.service';
 const requestLabelMaxLength = 220;
 const whitespaceRegex = /\s+/g;
 const trailingPartialWordRegex = /\s+\S*$/;
+const pathSeparatorRegex = /[/\\]+/;
 
 function presetPath(preset?: DestinationPreset): string {
   return preset?.id === TorrentRouterPresetId.manual ? '' : preset?.path ?? '';
@@ -42,6 +50,7 @@ function summarizeRequestLabel(request?: TorrentCaptureRequest): string {
 export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> = ({ container }) => {
   const dispatch = useDispatch();
   const settings = useSelector(getTorrentRouterSettings);
+  const settingsRef = useRef(settings);
   const [request, setRequest] = useState<TorrentCaptureRequest>();
   const [presetId, setPresetId] = useState<TorrentRouterPresetId>(TorrentRouterPresetId.manual);
   const [destination, setDestination] = useState('');
@@ -52,12 +61,29 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
   const open = !!request;
   const presets = useMemo(() => settings.presets, [settings.presets]);
   const selectedPreset = presets.find(preset => preset.id === presetId);
+  const favoriteSuggestions = useMemo(() => getFavoriteDestinationSuggestions(settings, presetId), [presetId, settings]);
+  const selectedFavorite = favoriteSuggestions.find(favorite => favorite.path === destination);
   const trackerSuggestions = useMemo(
     () => (request ? getTrackerDestinationSuggestions(settings, request.tracker, presetId) : []),
     [presetId, request, settings],
   );
   const selectedTrackerSuggestion = trackerSuggestions.includes(destination) ? destination : '';
   const requestLabel = useMemo(() => summarizeRequestLabel(request), [request]);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
+  const syncRouterSettings = (nextSettings: typeof settings) => {
+    settingsRef.current = nextSettings;
+    dispatch(syncTorrentRouter(nextSettings));
+  };
+
+  const destinationForPreset = useCallback((preset: DestinationPreset, nextRequest?: TorrentCaptureRequest): string => {
+    const favorites = getFavoriteDestinationSuggestions(settingsRef.current, preset.id);
+    const suggestions = getTrackerDestinationSuggestions(settingsRef.current, nextRequest?.tracker, preset.id);
+    return presetPath(preset) || favorites[0]?.path || suggestions[0] || '';
+  }, []);
 
   useEffect(() => {
     const abort$ = new Subject<void>();
@@ -68,22 +94,29 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
       }
 
       const guessed = guessDestinationPreset(nextRequest, presets);
-      const suggestions = getTrackerDestinationSuggestions(settings, nextRequest.tracker, guessed.id);
       setRequest(nextRequest);
       setPresetId(guessed.id);
-      setDestination(presetPath(guessed) || suggestions[0] || '');
+      setDestination(destinationForPreset(guessed, nextRequest));
     });
 
     return () => {
       abort$.next();
       abort$.complete();
     };
-  }, [presets, settings]);
+  }, [destinationForPreset, presets]);
 
   const onPresetChange = (next: TorrentRouterPresetId) => {
     const preset = presets.find(item => item.id === next);
     setPresetId(next);
-    setDestination(presetPath(preset));
+    if (preset) setDestination(destinationForPreset(preset, request));
+  };
+
+  const onFavoriteChange = (favoriteId: string) => {
+    const favorite = favoriteSuggestions.find(item => item.id === favoriteId);
+    if (!favorite) return;
+
+    setDestination(favorite.path);
+    if (favorite.presetId) setPresetId(favorite.presetId);
   };
 
   const openBrowser = () => {
@@ -98,6 +131,27 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
   const selectBrowserDestination = () => {
     if (browserSelection.trim()) setDestination(browserSelection.trim());
     closeBrowser();
+  };
+
+  const saveDestinationFavorite = () => {
+    const selectedDestination = destination.trim();
+    if (!selectedDestination) return;
+
+    const label = selectedPreset?.id && selectedPreset.id !== TorrentRouterPresetId.manual ? selectedPreset.label : selectedDestination.split(pathSeparatorRegex).filter(Boolean).pop();
+    const nextSettings = addDestinationFavorite(settingsRef.current, {
+      label: label || 'Favorite destination',
+      path: selectedDestination,
+      presetId,
+      tracker: request?.tracker,
+    });
+
+    syncRouterSettings(nextSettings);
+    NotificationService.info({
+      title: 'Favorite destination saved',
+      message: selectedDestination,
+      contextMessage: request?.tracker,
+      success: true,
+    });
   };
 
   const onClose = () => {
@@ -123,7 +177,7 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
     try {
       const selectedDestination = destination.trim();
       await submitTorrentCapture(request, selectedDestination);
-      dispatch(syncTorrentRouter(rememberTrackerDestination(settings, request.tracker, selectedDestination, presetId)));
+      syncRouterSettings(rememberTrackerDestination(settingsRef.current, request.tracker, selectedDestination, presetId));
       NotificationService.info({
         title: 'Torrent sent to Synology',
         message: [`${requestLabel || 'Torrent'} was sent to Synology Download Station.`, `Folder: ${selectedDestination}`].join('\n'),
@@ -184,6 +238,26 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
                 {request?.tracker}
               </Typography>
             </Box>
+            {favoriteSuggestions.length > 0 && (
+              <TextField
+                select
+                label="Favorite destination"
+                value={selectedFavorite?.id ?? ''}
+                fullWidth
+                disabled={loading}
+                onChange={event => onFavoriteChange(event.target.value)}
+                SelectProps={{ native: true }}
+              >
+                <option value="">Choose favorite</option>
+                {favoriteSuggestions.map(favorite => (
+                  <option key={favorite.id} value={favorite.id}>
+                    {favorite.label}
+                    {' - '}
+                    {favorite.path}
+                  </option>
+                ))}
+              </TextField>
+            )}
             <TextField
               select
               label="Preset"
@@ -222,6 +296,18 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
                 },
               }}
             />
+            <Box>
+              <Button
+                size="small"
+                variant="text"
+                color={selectedFavorite ? 'warning' : 'primary'}
+                startIcon={selectedFavorite ? <StarIcon /> : <StarBorderIcon />}
+                disabled={loading || !destination.trim() || !!selectedFavorite}
+                onClick={saveDestinationFavorite}
+              >
+                {selectedFavorite ? 'Saved favorite' : 'Save as favorite'}
+              </Button>
+            </Box>
             {trackerSuggestions.length > 0 && (
               <TextField
                 select

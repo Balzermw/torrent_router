@@ -3,7 +3,14 @@ import type { TorrentRouterSettings } from '../../models/torrent-router.model';
 import { describe, expect, it } from 'vitest';
 
 import { defaultTorrentRouterSettings, TorrentRouterPresetId } from '../../models/torrent-router.model';
-import { getTrackerDestinationSuggestions, rememberTrackerDestination, trackerDestinationHistoryKey } from './torrent-router-history';
+import {
+  addDestinationFavorite,
+  getFavoriteDestinationSuggestions,
+  getTrackerDestinationSuggestions,
+  rememberTrackerDestination,
+  removeDestinationFavorite,
+  trackerDestinationHistoryKey,
+} from './torrent-router-history';
 
 function settingsWithHistory(destinationHistory: TorrentRouterSettings['destinationHistory'] = {}): TorrentRouterSettings {
   return {
@@ -75,5 +82,34 @@ describe('torrent-router-history', () => {
     expect(rememberTrackerDestination(settings, '', '/volume1/tv')).toBe(settings);
     expect(rememberTrackerDestination(settings, 'IPTorrents', '   ')).toBe(settings);
     expect(getTrackerDestinationSuggestions(settings, '')).toEqual([]);
+  });
+
+  it('saves favorite destinations newest first and dedupes by path', () => {
+    let settings = settingsWithHistory();
+
+    settings = addDestinationFavorite(settings, { label: 'TV / Plex', path: '/volume1/plex/tv', presetId: TorrentRouterPresetId.tv });
+    settings = addDestinationFavorite(settings, { label: 'Comics', path: '/volume1/comics', presetId: TorrentRouterPresetId.comics });
+    settings = addDestinationFavorite(settings, { label: 'Plex TV', path: '/volume1/plex/tv', presetId: TorrentRouterPresetId.tv });
+
+    expect(settings.favorites).toHaveLength(2);
+    expect(settings.favorites[0]).toMatchObject({ label: 'Plex TV', path: '/volume1/plex/tv', presetId: TorrentRouterPresetId.tv });
+  });
+
+  it('prioritizes favorites for the selected preset', () => {
+    let settings = settingsWithHistory();
+
+    settings = addDestinationFavorite(settings, { label: 'Comics', path: '/volume1/comics', presetId: TorrentRouterPresetId.comics });
+    settings = addDestinationFavorite(settings, { label: 'TV', path: '/volume1/tv', presetId: TorrentRouterPresetId.tv });
+
+    expect(getFavoriteDestinationSuggestions(settings, TorrentRouterPresetId.comics).map(favorite => favorite.path)).toEqual(['/volume1/comics', '/volume1/tv']);
+  });
+
+  it('removes favorite destinations by id', () => {
+    let settings = addDestinationFavorite(settingsWithHistory(), { label: 'TV', path: '/volume1/tv', presetId: TorrentRouterPresetId.tv });
+    const [favorite] = settings.favorites;
+
+    settings = removeDestinationFavorite(settings, favorite.id);
+
+    expect(settings.favorites).toEqual([]);
   });
 });

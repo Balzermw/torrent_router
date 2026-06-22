@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultConnection, defaultDownloads, defaultSettings, SyncSettingMode } from '../../models/settings.model';
-import { defaultTorrentRouterSettings } from '../../models/torrent-router.model';
+import { defaultTorrentRouterSettings, TorrentRouterPresetId } from '../../models/torrent-router.model';
 
 vi.mock('../../utils/webex.utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../utils/webex.utils')>();
@@ -164,10 +164,12 @@ describe('settings.reducer', () => {
       baseState.torrentRouter.destinationHistory = {
         iptorrents: ['/volume1/tv'],
       };
+      baseState.torrentRouter.favorites = [{ id: 'favorite-tv', label: 'TV / Plex', path: '/volume1/tv', presetId: TorrentRouterPresetId.tv }];
 
       const result = syncTorrentRouterReducer(baseState, makeAction({ hosts: ['iptorrents.com'] }));
 
       expect(result.torrentRouter.destinationHistory).toEqual({ iptorrents: ['/volume1/tv'] });
+      expect(result.torrentRouter.favorites).toEqual([{ id: 'favorite-tv', label: 'TV / Plex', path: '/volume1/tv', presetId: 'tv' }]);
       expect(localSet).toHaveBeenCalled();
       expect(syncSet).not.toHaveBeenCalled();
     });

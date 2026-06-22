@@ -1,15 +1,20 @@
 import type { Content } from '../../../models/content.model';
+import type { Task } from '../../../models/task.model';
 import type { StoreState } from '../../../store/store';
 import type { SearchInputRef } from '../../common/inputs/search-input';
 import type { OnRefreshCallback } from '../../utils/use-pull-to-refresh';
 import type { ConfirmationState, TaskEditState } from './task/task-detail';
 
-import { Container, MenuItem } from '@mui/material';
+import ClearAllIcon from '@mui/icons-material/ClearAll';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import { Box, Button, Container, MenuItem, Stack, Typography } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { TransitionGroup } from 'react-transition-group';
 
+import { ContentSource } from '../../../models/content.model';
 import { ErrorType, LoginError } from '../../../models/error.model';
+import { TaskStatus } from '../../../models/task.model';
 import { DownloadService } from '../../../services/download/download.service';
 import { NotificationService } from '../../../services/notification/notification.service';
 import { PanelService } from '../../../services/panel/panel.service';
@@ -96,6 +101,22 @@ export function ContentPanel() {
     if (_destinationFilter?.length) return _destinationFilter;
     return contents.filter(content => content.status?.trim()?.toLowerCase()?.includes(filter?.trim()?.toLowerCase()));
   }, [contents, visible, filter, filterMode]);
+  const filteredTasks = useMemo(() => filteredContents.filter((content): content is Task => content.source === ContentSource.Task), [filteredContents]);
+  const visibleTaskIds = useMemo(() => filteredTasks.map(task => task.id), [filteredTasks]);
+  const finishedOrErrorTaskIds = useMemo(
+    () => filteredTasks.filter(task => [TaskStatus.finished, TaskStatus.error].includes(task.status)).map(task => task.id),
+    [filteredTasks],
+  );
+
+  const confirmDeleteTasks = (title: string, ids: Task['id'][], description: string) => {
+    if (!ids.length) return;
+    setConfirmation({
+      open: true,
+      title,
+      description,
+      callback: () => QueryService.deleteTasksByIds(ids).subscribe(handleError('task', 'delete')),
+    });
+  };
 
   const { containerRef, handlers, ...loaderProps } = usePullToRefresh({ onRefresh, disabled: disabledRef });
   const searchInputRef = useRef<SearchInputRef>(null);
@@ -172,6 +193,54 @@ export function ContentPanel() {
           </MenuItem>
         ))}
       </SearchInput>
+      {!!filteredTasks.length && (
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 20,
+            px: 1,
+            py: 0.75,
+            backgroundColor: 'background.paper',
+            borderBottom: theme => `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ minHeight: '2.25rem' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ minWidth: 0 }}>
+              {filteredTasks.length}
+              {' '}
+              visible tasks
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Button
+                size="small"
+                variant="outlined"
+                color="warning"
+                startIcon={<ClearAllIcon />}
+                disabled={!finishedOrErrorTaskIds.length}
+                onClick={() =>
+                  confirmDeleteTasks(
+                    'Clear finished and errored tasks?',
+                    finishedOrErrorTaskIds,
+                    `This will remove ${finishedOrErrorTaskIds.length} finished or errored Synology task(s) from the current view.`,
+                  )}
+              >
+                Clear done/errors
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteSweepIcon />}
+                onClick={() =>
+                  confirmDeleteTasks('Delete visible tasks?', visibleTaskIds, `This will remove ${visibleTaskIds.length} visible Synology task(s) from Download Station.`)}
+              >
+                Delete visible
+              </Button>
+            </Stack>
+          </Stack>
+        </Box>
+      )}
       <RefreshLoader {...loaderProps} loaderTop={loaderTop} />
       {filteredContents?.length ? items : <ContentEmpty />}
 

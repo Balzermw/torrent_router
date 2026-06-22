@@ -1,14 +1,37 @@
 import type { DestinationPreset, TorrentRouterSettings } from '../../../../models/torrent-router.model';
 import type { StoreState } from '../../../../store/store';
 
+import DeleteIcon from '@mui/icons-material/Delete';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import SaveIcon from '@mui/icons-material/Save';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
-import { Box, Button, Card, CardActions, CardContent, CardHeader, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, InputAdornment, Stack, Switch, TextField, Tooltip } from '@mui/material';
+import StarIcon from '@mui/icons-material/Star';
+import {
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  InputAdornment,
+  Stack,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { defaultTorrentRouterSettings, TorrentRouterPresetId } from '../../../../models/torrent-router.model';
+import { removeDestinationFavorite } from '../../../../services/torrent/torrent-router-history';
 import { syncTorrentRouter } from '../../../../store/actions/settings.action';
 import { getTorrentRouterSettings } from '../../../../store/selectors/settings.selector';
 import { ButtonWithConfirm } from '../../../common/button/button-with-confirm';
@@ -33,6 +56,7 @@ function normalizeSettings(settings: TorrentRouterSettings): TorrentRouterSettin
     ...settings,
     hosts: settings.hosts?.length ? settings.hosts : defaultTorrentRouterSettings.hosts,
     destinationHistory: settings.destinationHistory ?? defaultTorrentRouterSettings.destinationHistory,
+    favorites: settings.favorites ?? defaultTorrentRouterSettings.favorites,
     presets: defaultTorrentRouterSettings.presets.map((preset) => {
       const existing = settings.presets?.find(item => item.id === preset.id);
       return { ...preset, ...existing };
@@ -83,6 +107,10 @@ export function SettingsTorrentRouter() {
     closePresetBrowser();
   };
 
+  const removeFavorite = (id: string) => {
+    setForm(current => removeDestinationFavorite(current, id));
+  };
+
   return (
     <>
       <Card raised={true}>
@@ -130,6 +158,41 @@ export function SettingsTorrentRouter() {
                   </Grid>
                 ))}
               </Grid>
+              <Stack spacing={1}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <StarIcon fontSize="small" color="warning" />
+                  <Typography variant="subtitle2">Favorite destinations</Typography>
+                </Stack>
+                {form.favorites?.length
+                  ? form.favorites.map(favorite => (
+                      <TextField
+                        key={favorite.id}
+                        label={favorite.label}
+                        value={favorite.path}
+                        fullWidth
+                        helperText={favorite.presetId ? `Preset: ${favorite.presetId}` : undefined}
+                        slotProps={{
+                          htmlInput: { readOnly: true, style: { fontSize: '0.875em' } },
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <Tooltip title={`Remove ${favorite.label}`}>
+                                  <IconButton aria-label={`Remove ${favorite.label}`} edge="end" onClick={() => removeFavorite(favorite.id)}>
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
+                    ))
+                  : (
+                      <Typography variant="caption" color="text.secondary">
+                        Save favorites from the Torrent Router prompt.
+                      </Typography>
+                    )}
+              </Stack>
             </Stack>
           </Collapse>
         </CardContent>
