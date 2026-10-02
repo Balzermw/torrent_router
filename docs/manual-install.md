@@ -8,7 +8,7 @@ Use this guide when installing Synology Torrent Router without the Chrome Web St
 2. Download the latest file named like:
 
    ```text
-   synology-torrent-router-4.2.5-chrome-extension.zip
+   synology-torrent-router-4.2.6-chrome-extension.zip
    ```
 
 3. Do not load the zip directly in Chrome. Extract it first.
@@ -68,6 +68,8 @@ For BroadcasTheNet, check its checkbox (or add `broadcasthe.net` to Tracker host
 then click Save and approve Chrome's site-access request. Refresh the tracker tab.
 Use the individual `DL` links beside episodes or season packs. Series Collector
 downloads are not single-torrent links and continue to use the browser.
+Save now confirms which tracker origins were registered, or reports missing site
+access, script-registration failures, and open-tab injection failures.
 
 ## Use
 
@@ -101,6 +103,8 @@ If you extract to a new folder, remove the old unpacked extension entry and load
 - `Chrome host access is required`: approve the Chrome permission prompt for your NAS address, then retry.
 - Torrent prompt does not appear: disable other Download Station / Torrent Router extension copies and refresh the tracker tab. Confirm Torrent Router is enabled, then click Save under `Downloads > Torrent Router` and approve site access. Also check Chrome's extension Details > Site access for the tracker. Torrent Router does not require the separate legacy link-interception switch.
 - Torrent upload fails with HTML/login page: log into the tracker in the current browser session and retry.
+- `ERR_BLOCKED_BY_CLIENT` on a tracker download page: this is a client-side blocked request, not a Synology upload error. To isolate it, keep the original Download Station extension disabled, disable only Torrent Router temporarily, and retry the same normal download. If it remains blocked, another browser component is responsible. Do not disable Chrome Safe Browsing or antivirus protections.
+- A private torrent downloads straight to Chrome with no destination prompt: it was not captured by Torrent Router. The legacy URL downloader deliberately leaves these files alone because forwarding an authenticated URL to the NAS is unreliable. Check the Save result and tracker site access.
 
 ## Safety Notes
 

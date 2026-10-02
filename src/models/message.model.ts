@@ -39,6 +39,7 @@ export enum ChromeMessageType {
   scraped = 'scraped',
   scrapeDownload = 'scrapeDownload',
   torrentUpload = 'torrentUpload',
+  trackerScriptsSync = 'trackerScriptsSync',
 }
 
 export interface ScrapeDownloadPayload {

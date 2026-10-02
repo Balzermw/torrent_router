@@ -3,7 +3,7 @@ import type { TorrentRouterSettings } from '../../models/torrent-router.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultTorrentRouterSettings, TorrentRouterPresetId } from '../../models/torrent-router.model';
-import { buildTorrentCaptureRequest, guessDestinationPreset, hostMatchesPattern } from './tracker-adapters';
+import { buildTorrentCaptureRequest, guessDestinationPreset, hostMatchesPattern, isTrackerTorrentUrl } from './tracker-adapters';
 
 const settings: TorrentRouterSettings = {
   ...defaultTorrentRouterSettings,
@@ -82,6 +82,17 @@ describe('tracker-adapters', () => {
     expect(request?.method).toBe('POST');
     expect(request?.body?.entries).toContainEqual(['id', '123']);
     expect(request?.body?.entries).toContainEqual(['action', 'download']);
+  });
+
+  it('keeps private torrents out of the legacy NAS URL downloader', () => {
+    expect(isTrackerTorrentUrl('https://broadcasthe.net/torrents.php?action=download&id=123&authkey=fixture-auth', defaultTorrentRouterSettings)).toBe(true);
+    expect(isTrackerTorrentUrl('https://broadcasthe.net/torrents.php?action=download&id=123', settings)).toBe(true);
+    expect(isTrackerTorrentUrl('https://torrentleech.org/download/123/test.torrent', settings)).toBe(true);
+    expect(isTrackerTorrentUrl('https://iptorrents.com/download.php/123/123.torrent', settings)).toBe(true);
+    expect(isTrackerTorrentUrl('https://example.com/test.torrent', settings)).toBe(false);
+    expect(isTrackerTorrentUrl('https://broadcasthe.net/series.php?id=123', defaultTorrentRouterSettings)).toBe(false);
+    expect(isTrackerTorrentUrl('not a URL', settings)).toBe(false);
+    expect(isTrackerTorrentUrl('https://torrentleech.org/download/123/test.torrent', { ...settings, enabled: false })).toBe(true);
   });
 
   it('captures a keyboard form submission and honors submitter overrides', () => {

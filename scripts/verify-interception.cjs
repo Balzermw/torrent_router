@@ -15,6 +15,8 @@ const manifestPath = path.join(extension, 'manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 manifest.host_permissions.push('*://*.broadcasthe.net/*');
 fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+fs.writeFileSync(path.join(extension, 'status-check.html'), '<!doctype html><body>Checking<script src="status-check.js"></script>');
+fs.writeFileSync(path.join(extension, 'status-check.js'), 'chrome.runtime.sendMessage({type:"trackerScriptsSync"}, response => { document.body.textContent = JSON.stringify(response || {error: chrome.runtime.lastError?.message}); });');
 
 const html = `<!doctype html><html><head><title>Example Show S01E07 | IPTorrents</title></head><body>
 <h1>Example Show S01E07</h1>
@@ -77,6 +79,14 @@ async function run() {
     await page.goto('https://www.iptorrents.com/details.php?id=123');
     await page.locator('synology-download-content').waitFor({ state: 'attached' });
     await page.waitForTimeout(700);
+    const statusPage = await context.newPage();
+    await statusPage.goto(`chrome-extension://${new URL(worker.url()).host}/status-check.html`);
+    await statusPage.waitForFunction(() => document.body.textContent.startsWith('{'));
+    const accessStatus = JSON.parse(await statusPage.locator('body').textContent());
+    assert.equal(accessStatus.success, true);
+    assert.ok(accessStatus.payload.registeredOrigins.includes('*://*.broadcasthe.net/*'));
+    assert.deepEqual(accessStatus.payload.failedTabIds, []);
+    await statusPage.close();
     let browserDownloads = 0;
     page.on('download', () => browserDownloads++);
     await page.locator('#download svg').click();
@@ -148,7 +158,7 @@ async function run() {
     await page.screenshot({ path: path.join(artifacts, 'btn-mobile.png') });
     assert.equal(browserDownloads, 0);
     assert.deepEqual(errors, []);
-    console.log(JSON.stringify({ passed: ['inline click and SVG interception', 'keyboard POST submission', 'no browser download', 'reinjection preserves open prompt', 'destroyed root recovery', 'TorrentLeech org/cc image buttons', 'BTN permission-based injection and DL links', 'no page errors'], screenshots: artifacts }, null, 2));
+    console.log(JSON.stringify({ passed: ['background site-access acknowledgment', 'inline click and SVG interception', 'keyboard POST submission', 'no browser download', 'reinjection preserves open prompt', 'destroyed root recovery', 'TorrentLeech org/cc image buttons', 'BTN permission-based injection and DL links', 'no page errors'], screenshots: artifacts }, null, 2));
   } finally {
     await context.close();
     assert.equal(path.dirname(path.resolve(profile)), path.resolve(os.tmpdir()));

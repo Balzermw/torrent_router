@@ -1,4 +1,4 @@
-import type { DestinationPreset, TorrentRouterSettings } from '../../../../models/torrent-router.model';
+import type { DestinationPreset, TorrentRouterSettings, TrackerScriptStatus } from '../../../../models/torrent-router.model';
 import type { StoreState } from '../../../../store/store';
 
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -32,11 +32,14 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { lastValueFrom, timeout } from 'rxjs';
 
+import { ChromeMessageType } from '../../../../models/message.model';
 import { defaultTorrentRouterSettings, TorrentRouterPresetId } from '../../../../models/torrent-router.model';
 import { removeDestinationFavorite } from '../../../../services/torrent/torrent-router-history';
 import { syncTorrentRouter } from '../../../../store/actions/settings.action';
 import { getTorrentRouterSettings } from '../../../../store/selectors/settings.selector';
+import { sendMessage } from '../../../../utils/chrome/chrome-message.utils';
 import { trackerOriginPatterns } from '../../../../utils/chrome/chrome-permissions.utils';
 import { ButtonWithConfirm } from '../../../common/button/button-with-confirm';
 import { Explorer } from '../../../common/explorer/folder/explorer';
@@ -75,6 +78,7 @@ export function SettingsTorrentRouter() {
   const [browsePreset, setBrowsePreset] = useState<DestinationPreset>();
   const [browsePath, setBrowsePath] = useState('');
   const [permissionError, setPermissionError] = useState('');
+  const [saveStatus, setSaveStatus] = useState('');
   const [saving, setSaving] = useState(false);
 
   const isDirty = JSON.stringify(normalizeSettings(state)) !== JSON.stringify(form);
@@ -89,16 +93,26 @@ export function SettingsTorrentRouter() {
   const save = async () => {
     setSaving(true);
     setPermissionError('');
+    setSaveStatus('');
     try {
       const next = normalizeSettings(form);
       if (next.enabled && !await chrome.permissions.request({ origins: trackerOriginPatterns(next.hosts) })) {
         setPermissionError('Site access was not granted. Approve access to enable interception on these trackers.');
         return;
       }
-      dispatch(syncTorrentRouter(next));
+      await Promise.resolve(dispatch(syncTorrentRouter(next)));
       setForm(next);
+      const status = await lastValueFrom(sendMessage<boolean, TrackerScriptStatus>({ type: ChromeMessageType.trackerScriptsSync }).pipe(timeout(10000)));
+      const missing = status.configuredOrigins.filter(origin => !status.registeredOrigins.includes(origin));
+      if (missing.length) {
+        setPermissionError(`Settings saved, but Chrome site access is missing for: ${missing.join(', ')}. Check this extension's Site access in Chrome.`);
+      } else if (status.failedTabIds.length) {
+        setPermissionError('Site access is enabled, but injection failed in an open tracker tab. Refresh that tracker page.');
+      } else {
+        setSaveStatus(status.enabled ? `Site access enabled: ${status.registeredOrigins.map(origin => origin.replace('*://*.', '').replace('/*', '')).join(', ')}` : 'Torrent Router disabled.');
+      }
     } catch (error) {
-      setPermissionError(error instanceof Error ? error.message : 'Unable to save tracker site access.');
+      setPermissionError(error instanceof Error || (typeof error === 'object' && error !== null && 'message' in error) ? String(error.message) : 'Unable to save tracker site access.');
     } finally {
       setSaving(false);
     }
@@ -140,6 +154,7 @@ export function SettingsTorrentRouter() {
         />
         <CardContent>
           {permissionError && <Alert severity="error" sx={{ mb: 2 }}>{permissionError}</Alert>}
+          {saveStatus && <Alert severity="success" sx={{ mb: 2 }}>{saveStatus}</Alert>}
           <Collapse in={form.enabled} unmountOnExit>
             <Stack spacing={2}>
               <FormControlLabel

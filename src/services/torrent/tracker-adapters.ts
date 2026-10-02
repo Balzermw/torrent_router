@@ -112,6 +112,17 @@ function getAdapter(host: string): TrackerAdapter | undefined {
   return adapters.find(adapter => adapter.hosts.some(pattern => hostMatchesPattern(host, pattern)));
 }
 
+export function isTrackerTorrentUrl(url: string, settings: TorrentRouterSettings): boolean {
+  try {
+    const parsed = new URL(url);
+    const adapter = getAdapter(parsed.host);
+    if (!['http:', 'https:'].includes(parsed.protocol) || (!adapter && !isConfiguredHost(parsed.host, settings))) return false;
+    return torrentFilenameRegex.test(url) || (adapter?.downloadPatterns.some(pattern => pattern.test(url)) ?? false);
+  } catch {
+    return false;
+  }
+}
+
 function findElementAncestor<T extends HTMLElement>(element: HTMLElement | null, predicate: (el: HTMLElement) => el is T, depth = 10): T | undefined {
   if (!element || depth < 0) return undefined;
   if (predicate(element)) return element;

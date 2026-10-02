@@ -9,8 +9,9 @@ import { DownloadStatus } from '../../../models/download.model';
 import { InterceptService } from '../../../services/download/intercept.service';
 import { LoggerService } from '../../../services/logger/logger.service';
 import { NotificationService } from '../../../services/notification/notification.service';
+import { isTrackerTorrentUrl } from '../../../services/torrent/tracker-adapters';
 import { addFolderHistory } from '../../../store/actions/state.action';
-import { getSettingsDownloadsIntercept, getSettingsDownloadsInterceptEnabled, getSettingsDownloadsNotifications } from '../../../store/selectors/settings.selector';
+import { getSettingsDownloadsIntercept, getSettingsDownloadsInterceptEnabled, getSettingsDownloadsNotifications, getTorrentRouterSettings } from '../../../store/selectors/settings.selector';
 import { getDefaultFolder } from '../../../store/selectors/state.selector';
 import { onFilename$, onStatus$ } from '../../../utils/chrome/chrome-download.utils';
 import { store$ } from '../../../utils/rxjs.utils';
@@ -72,6 +73,14 @@ function onDownloadEventsIntercept(store: StoreOrProxy) {
 
         // If intercept disabled
         if (!enabled) return suggest();
+
+        // Private torrents need browser-authenticated bytes, not a NAS URL fetch.
+        // If page capture is unavailable, leave the ordinary browser download alone.
+        const router = getTorrentRouterSettings(store.getState());
+        if ([download.url, download.finalUrl].some(url => url && isTrackerTorrentUrl(url, router))) {
+          LoggerService.info('Private torrent left in browser; skipping legacy URL transfer.');
+          return suggest();
+        }
 
         // If extension not supported
         if (!all && !active.some(({ ext, mime }) => download.filename?.endsWith(ext) && (!mime?.length || download.mime === mime))) {

@@ -54,6 +54,13 @@ export interface TorrentPayload {
   size: number;
 }
 
+export interface TrackerScriptStatus {
+  enabled: boolean;
+  configuredOrigins: string[];
+  registeredOrigins: string[];
+  failedTabIds: number[];
+}
+
 export interface TorrentUploadPayload {
   data: string;
   size: number;
