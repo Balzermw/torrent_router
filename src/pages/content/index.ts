@@ -5,7 +5,9 @@ import { injectContentApp } from './modules/inject-content-app';
 const contentContext = globalThis as typeof globalThis & { torrentRouterInitialized?: boolean };
 if (!contentContext.torrentRouterInitialized) {
   contentContext.torrentRouterInitialized = true;
-  void injectContentApp()
+  void injectContentApp(() => {
+    contentContext.torrentRouterInitialized = false;
+  })
     .then(() => LoggerService.debug('Content script component rendered.'))
     .catch((err) => {
       contentContext.torrentRouterInitialized = false;

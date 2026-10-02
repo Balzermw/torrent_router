@@ -68,4 +68,27 @@ describe('tracker interception events', () => {
       magnetSub.unsubscribe();
     }
   });
+
+  it('uses the router switch independently of legacy magnet interception', () => {
+    document.body.innerHTML = '<a href="https://torrentleech.org/download/123/test.torrent"><img alt="download button" /></a>';
+    state.settings.content.intercept = false;
+    const prompt = vi.fn();
+    const dialogSub = torrentRouterDialog$.subscribe(prompt);
+    const clicks = clickListener$.subscribe();
+    try {
+      const click = () => {
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        document.querySelector('img')!.dispatchEvent(event);
+        return event;
+      };
+      expect(click().defaultPrevented).toBe(true);
+      expect(prompt).toHaveBeenCalledTimes(1);
+      state.settings.torrentRouter.enabled = false;
+      expect(click().defaultPrevented).toBe(false);
+      expect(prompt).toHaveBeenCalledTimes(1);
+    } finally {
+      clicks.unsubscribe();
+      dialogSub.unsubscribe();
+    }
+  });
 });

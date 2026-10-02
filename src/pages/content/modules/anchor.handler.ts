@@ -52,7 +52,6 @@ function listener(event: MouseEvent | SubmitEvent) {
     const anchor = recursivelyFindAnchorAncestor(event.target as HTMLElement);
     lastClick$.next({ event, anchor });
   }
-  if (storeProxy.getState()?.settings?.content?.intercept === false) return;
   if (event instanceof MouseEvent && (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return;
 
   const torrentCapture = buildTorrentCaptureRequest(event, storeProxy.getState()?.settings?.torrentRouter);
@@ -69,6 +68,8 @@ function listener(event: MouseEvent | SubmitEvent) {
   }
 
   if (!(event instanceof MouseEvent)) return;
+  // The legacy link switch controls magnets; Torrent Router has its own switch.
+  if (storeProxy.getState()?.settings?.content?.intercept === false) return;
   const anchor = recursivelyFindAnchorAncestor(event.target as HTMLElement);
   if (!anchor?.href) return;
   if (!startsWithAnyProtocol(anchor.href, DOWNLOAD_ONLY_PROTOCOLS)) return;

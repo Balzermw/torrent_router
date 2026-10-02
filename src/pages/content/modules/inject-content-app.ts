@@ -89,6 +89,8 @@ function connect(root: HTMLElement) {
       if (!chrome.runtime?.id) return;
       port = portConnect({ name: AppInstance.content });
       port.onDisconnect.addListener(() => {
+        const error = chrome.runtime?.lastError;
+        if (error) LoggerService.debug('Content connection disconnected.', error.message);
         if (!disposed) timer = setTimeout(reconnect, 1000);
       });
     } catch {
@@ -110,7 +112,7 @@ function connect(root: HTMLElement) {
 /**
  * Open a modal popup for custom download actions
  */
-export async function injectContentApp(): Promise<void> {
+export async function injectContentApp(onDestroy?: () => void): Promise<void> {
   // if page is not a valid html document with body, skip injection
   if (!document.body) return;
 
@@ -133,6 +135,7 @@ export async function injectContentApp(): Promise<void> {
   root.dataset.context = 'content-script';
   root.style.all = 'initial';
   document.body.appendChild(root);
+  if (onDestroy) root.addEventListener(onDestroyEvent, onDestroy, { once: true });
 
   // attach listeners
   listenUntilDestroy(root);
@@ -141,5 +144,6 @@ export async function injectContentApp(): Promise<void> {
   connect(root);
 
   // render component
-  return ContentAppWc.prototype.render(root, storeProxy);
+  const unmount = ContentAppWc.prototype.render(root, storeProxy);
+  root.addEventListener(onDestroyEvent, unmount, { once: true });
 }

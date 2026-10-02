@@ -14,11 +14,13 @@ import {
   CardActions,
   CardContent,
   CardHeader,
+  Checkbox,
   Collapse,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Grid,
   IconButton,
   InputAdornment,
@@ -33,8 +35,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { defaultTorrentRouterSettings, TorrentRouterPresetId } from '../../../../models/torrent-router.model';
 import { removeDestinationFavorite } from '../../../../services/torrent/torrent-router-history';
-import { syncContentSettings, syncTorrentRouter } from '../../../../store/actions/settings.action';
-import { getContentSettings, getTorrentRouterSettings } from '../../../../store/selectors/settings.selector';
+import { syncTorrentRouter } from '../../../../store/actions/settings.action';
+import { getTorrentRouterSettings } from '../../../../store/selectors/settings.selector';
 import { trackerOriginPatterns } from '../../../../utils/chrome/chrome-permissions.utils';
 import { ButtonWithConfirm } from '../../../common/button/button-with-confirm';
 import { Explorer } from '../../../common/explorer/folder/explorer';
@@ -69,7 +71,6 @@ function normalizeSettings(settings: TorrentRouterSettings): TorrentRouterSettin
 export function SettingsTorrentRouter() {
   const dispatch = useDispatch();
   const state = useSelector<StoreState, TorrentRouterSettings>(getTorrentRouterSettings);
-  const contentSettings = useSelector(getContentSettings);
   const [form, setForm] = useState<TorrentRouterSettings>(() => normalizeSettings(state));
   const [browsePreset, setBrowsePreset] = useState<DestinationPreset>();
   const [browsePath, setBrowsePath] = useState('');
@@ -139,13 +140,20 @@ export function SettingsTorrentRouter() {
         />
         <CardContent>
           {permissionError && <Alert severity="error" sx={{ mb: 2 }}>{permissionError}</Alert>}
-          {form.enabled && !contentSettings.intercept && (
-            <Alert severity="warning" sx={{ mb: 2 }} action={<Button onClick={() => dispatch(syncContentSettings({ intercept: true }))}>Enable</Button>}>
-              Link interception is disabled.
-            </Alert>
-          )}
           <Collapse in={form.enabled} unmountOnExit>
             <Stack spacing={2}>
+              <FormControlLabel
+                label="BroadcasTheNet"
+                control={(
+                  <Checkbox
+                    checked={form.hosts.includes('broadcasthe.net')}
+                    onChange={event => setForm(current => ({
+                      ...current,
+                      hosts: event.target.checked ? [...new Set([...current.hosts, 'broadcasthe.net'])] : current.hosts.filter(host => host !== 'broadcasthe.net'),
+                    }))}
+                  />
+                )}
+              />
               <TextField
                 label="Tracker hosts"
                 value={hostsToText(form.hosts)}

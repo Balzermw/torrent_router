@@ -23,6 +23,11 @@ const adapters: TrackerAdapter[] = [
     downloadPatterns: [/\/download(?:\/|\?)/i, /\.torrent(?:$|[?#])/i],
   },
   {
+    name: 'BroadcasTheNet',
+    hosts: ['broadcasthe.net'],
+    downloadPatterns: [/\/torrents\.php\?(?:[^#]*&)?action=download(?:&|$)/i],
+  },
+  {
     name: 'MyAnonamouse',
     hosts: ['myanonamouse.net', 'mam.*'],
     downloadPatterns: [/\/tor\/download/i, /\/download(?:\.php|\/|\?)/i, /\.torrent(?:$|[?#])/i],
@@ -47,6 +52,7 @@ const titleCandidateSelector = [
   '.torrent_name',
   '.torrentName',
   '.release-title',
+  'a[href*="/torrent/"], a[href*="/t/"]',
   '.title',
   'h1',
   'h2',
@@ -55,6 +61,9 @@ const titleCandidateSelector = [
 const cssNoiseRegex = /\/\*|@keyframes|linear-gradient|radial-gradient|rgba?\(|font-family|box-shadow|text-shadow|z-index|animation:|transition:|pointer-events|user-select|\.fwc\d+/i;
 const markupNoiseRegex = /<style|<\/style|<script|<\/script|<!doctype|<html/i;
 const actionOnlyRegex = /^(?:download|download torrent|get torrent|torrent|snatch|freeleech|vip|temporary vip)$/i;
+const actionTitleRegex = /^(?:view torrent|dl)$/i;
+const btnSiteSuffixRegex = /\s*::\s*BroadcasTheNet.*$/i;
+const btnEpisodeRegex = /^S\d+(?:E\d+)?$/i;
 const leadingActionWordsRegex = /^(?:(?:download|get torrent|torrent|snatch)\s+)+/i;
 const temporaryVipPrefixRegex = /^temporary\s+vip\s+torrent\s+(?:title\s*)?/i;
 const titlePrefixRegex = /^title\s+/i;
@@ -150,7 +159,7 @@ function cleanContextText(value?: string | null): string {
     .replace(titlePrefixRegex, '')
     .trim();
 
-  if (!cleaned || actionOnlyRegex.test(cleaned)) return '';
+  if (!cleaned || actionOnlyRegex.test(cleaned) || actionTitleRegex.test(cleaned)) return '';
   return trimContextText(cleaned);
 }
 
@@ -182,6 +191,11 @@ function titleElementCandidates(element?: HTMLElement, container?: Element | nul
 
 function closestContextText(element?: HTMLElement): string {
   const container = element?.closest(contextContainerSelector);
+  if (hostMatchesPattern(new URL(document.URL).host, 'broadcasthe.net')) {
+    const series = document.title.replace(btnSiteSuffixRegex, '').trim();
+    const episode = Array.from(container?.querySelectorAll('a') ?? []).map(link => link.textContent?.trim()).find(text => text && btnEpisodeRegex.test(text));
+    return firstCleanContextText([episode ? `${series} ${episode}` : series]);
+  }
   const titleCandidates = titleElementCandidates(element, container).flatMap(candidate => elementTextCandidates(candidate));
 
   return firstCleanContextText([

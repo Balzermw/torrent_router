@@ -76,8 +76,10 @@ export class ContentAppWc extends HTMLElement {
     const app = shadowRoot.querySelector(`#${instance}-app`);
     const cache = createCache({ key: `${instance}-cache`, container, stylisPlugins: [fixNestedAmpersand] });
 
-    this._root = createRoot(app!);
-    this._root.render(<ContentApp storeOrProxy={storeOrProxy} cache={cache} container={container} instance={instance} />);
+    const reactRoot = createRoot(app!);
+    this._root = reactRoot;
+    reactRoot.render(<ContentApp storeOrProxy={storeOrProxy} cache={cache} container={container} instance={instance} />);
+    return () => reactRoot.unmount();
   }
 
   /**

@@ -1,6 +1,6 @@
 import type { TorrentRouterSettings } from '../../models/torrent-router.model';
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultTorrentRouterSettings, TorrentRouterPresetId } from '../../models/torrent-router.model';
 import { buildTorrentCaptureRequest, guessDestinationPreset, hostMatchesPattern } from './tracker-adapters';
@@ -31,6 +31,7 @@ describe('tracker-adapters', () => {
     document.title = '';
     setUrl('/torrents/?id=1');
   });
+  afterEach(() => vi.restoreAllMocks());
 
   it('matches hosts and wildcard patterns', () => {
     expect(hostMatchesPattern('www.iptorrents.com', 'iptorrents.com')).toBe(true);
@@ -122,6 +123,36 @@ describe('tracker-adapters', () => {
   it('supports the TorrentLeech alternate domain with older saved settings', () => {
     document.body.innerHTML = '<a href="https://www.torrentleech.cc/download/123">Download</a>';
     expect(buildTorrentCaptureRequest(clickEvent(document.querySelector('a')!), settings)?.tracker).toBe('TorrentLeech');
+  });
+
+  it('captures the TorrentLeech image button and nearby release name without title attributes', () => {
+    document.title = 'TorrentLeech.org';
+    document.body.innerHTML = '<table><tr><td><a href="/torrent/123">Example Show S01E07 1080p</a></td><td><a href="https://www.torrentleech.org/download/123/Example.Show.torrent"><img alt="download button" /></a></td></tr></table>';
+    expect(buildTorrentCaptureRequest(clickEvent(document.querySelector('img')!), settings)).toMatchObject({
+      tracker: 'TorrentLeech',
+      title: 'Example Show S01E07 1080p',
+      filename: 'Example.Show.torrent',
+    });
+  });
+
+  it('captures BTN DL links with authentication parameters unchanged and episode context', () => {
+    vi.spyOn(document, 'URL', 'get').mockReturnValue('https://broadcasthe.net/series.php?id=42');
+    document.title = 'Example Show :: BroadcasTheNet';
+    const url = 'https://broadcasthe.net/torrents.php?id=123&action=download&authkey=fixture-auth&torrent_pass=fixture-pass';
+    document.body.innerHTML = `<table><tr><td><a href="/torrents.php?id=123" title="View Torrent">S13E06</a></td><td><a href="${url}" title="Download">DL</a></td></tr></table>`;
+    expect(buildTorrentCaptureRequest(clickEvent(document.querySelector('a[title="Download"]')!), defaultTorrentRouterSettings)).toMatchObject({
+      url,
+      method: 'GET',
+      tracker: 'BroadcasTheNet',
+      title: 'Example Show S13E06',
+    });
+    expect(buildTorrentCaptureRequest(clickEvent(document.querySelector('a[title="Download"]')!), settings)).toBeUndefined();
+    expect(buildTorrentCaptureRequest(clickEvent(document.querySelector('a[title="View Torrent"]')!), defaultTorrentRouterSettings)).toBeUndefined();
+  });
+
+  it('does not intercept the BTN series collector as a single torrent', () => {
+    document.body.innerHTML = '<form action="https://broadcasthe.net/series.php"><input name="action" value="download" /><button>Download</button></form>';
+    expect(buildTorrentCaptureRequest(clickEvent(document.querySelector('button')!), defaultTorrentRouterSettings)).toBeUndefined();
   });
 
   it('leaves modified clicks and non-web links to the browser', () => {
