@@ -8,7 +8,7 @@ Use this guide when installing Synology Torrent Router without the Chrome Web St
 2. Download the latest file named like:
 
    ```text
-   synology-torrent-router-4.2.3-chrome-extension.zip
+   synology-torrent-router-4.2.4-chrome-extension.zip
    ```
 
 3. Do not load the zip directly in Chrome. Extract it first.
@@ -62,7 +62,7 @@ The selected folder must contain `manifest.json` directly inside it. If Chrome s
    - Comics / Comga
    - Ebooks / Ebook ingest
 5. Use the folder button to browse Synology folders.
-6. Save settings.
+6. Save settings and approve tracker site access if Chrome asks.
 
 ## Use
 
@@ -78,6 +78,7 @@ The selected folder must contain `manifest.json` directly inside it. If Chrome s
 2. Extract it over the old extension folder or into a new permanent folder.
 3. Go to `chrome://extensions`.
 4. Click the reload icon on Synology Torrent Router.
+5. Refresh any tracker tabs that were already open.
 
 If you extract to a new folder, remove the old unpacked extension entry and load the new folder.
 
@@ -93,7 +94,7 @@ If you extract to a new folder, remove the old unpacked extension entry and load
 - `Manifest file is missing or unreadable`: select the folder that directly contains `manifest.json`.
 - `Login attempt failed`: confirm protocol, NAS IP/host, port, username, password, and SSL certificate state.
 - `Chrome host access is required`: approve the Chrome permission prompt for your NAS address, then retry.
-- Torrent prompt does not appear: confirm the tracker host is supported and the extension is enabled under `Downloads > Torrent Router`.
+- Torrent prompt does not appear: refresh the tracker tab, confirm Torrent Router and link interception are enabled, then click Save under `Downloads > Torrent Router` and approve site access. Also check Chrome's extension Details > Site access for the tracker.
 - Torrent upload fails with HTML/login page: log into the tracker in the current browser session and retry.
 
 ## Safety Notes

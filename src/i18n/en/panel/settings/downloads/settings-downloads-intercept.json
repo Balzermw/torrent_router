@@ -1,9 +1,9 @@
 {
   "panel__settings__downloads__intercept__enabled__title": {
-    "message": "Downloads interception"
+    "message": "Browser download interception"
   },
   "panel__settings__downloads__intercept__enabled__subheader": {
-    "message": "Intercept downloads in injected scripts (within browser tabs)."
+    "message": "Transfer browser downloads. Private-tracker torrents use Torrent Router."
   },
   "panel__settings__downloads__intercept__warning": {
     "message": "Chrome can only support interception for one extension at a time. If you use another extension please disable either one."

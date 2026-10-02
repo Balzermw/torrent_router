@@ -94,7 +94,9 @@ export function hostMatchesPattern(host: string, pattern: string): boolean {
 
 function isConfiguredHost(host: string, settings?: TorrentRouterSettings): boolean {
   const hosts = settings?.hosts?.length ? settings.hosts : defaultTorrentRouterSettings.hosts;
-  return hosts.some(pattern => hostMatchesPattern(host, pattern));
+  if (hosts.some(pattern => hostMatchesPattern(host, pattern))) return true;
+  // Alternate domains belong to the same tracker, including older saved settings.
+  return getAdapter(host)?.hosts.some(alias => hosts.some(pattern => hostMatchesPattern(alias, pattern))) ?? false;
 }
 
 function getAdapter(host: string): TrackerAdapter | undefined {
@@ -211,12 +213,11 @@ function requestLooksLikeTorrent(url: string, text: string, adapter?: TrackerAda
 }
 
 function formBody(form: HTMLFormElement, submitter?: HTMLButtonElement | HTMLInputElement): TorrentRequestBody {
-  const data = new FormData(form);
-  if (submitter?.name && !data.has(submitter.name)) data.append(submitter.name, submitter.value ?? '');
+  const data = new FormData(form, submitter);
   const entries = Array.from(data.entries()).flatMap<[string, string]>(([key, value]) => (typeof value === 'string' ? [[key, value]] : []));
   return {
     type: 'form',
-    enctype: form.enctype,
+    enctype: submitter?.getAttribute('formenctype') ?? form.getAttribute('enctype') ?? 'application/x-www-form-urlencoded',
     entries,
   };
 }
@@ -290,20 +291,26 @@ export function guessDestinationPreset(
   return matched ?? manual;
 }
 
-export function buildTorrentCaptureRequest(event: MouseEvent, settings?: TorrentRouterSettings): TorrentCaptureRequest | undefined {
+export function buildTorrentCaptureRequest(event: MouseEvent | SubmitEvent, settings?: TorrentRouterSettings): TorrentCaptureRequest | undefined {
   if (settings?.enabled === false) return undefined;
-  if (event.button !== 0) return undefined;
+  if (event instanceof MouseEvent && (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return undefined;
 
-  const target = event.target as HTMLElement | null;
-  const anchor = findAnchor(target);
-  const submitter = findSubmitButton(target);
-  const form = submitter?.form;
+  const target = event.target instanceof Element ? event.target : undefined;
+  const element = target instanceof HTMLElement ? target : target?.parentElement;
+  const anchor = findAnchor(element ?? null);
+  const clickedSubmitter = findSubmitButton(element ?? null);
+  const submitter = event instanceof SubmitEvent
+    ? event.submitter instanceof HTMLButtonElement || event.submitter instanceof HTMLInputElement ? event.submitter : undefined
+    : clickedSubmitter;
+  const form = event instanceof SubmitEvent && target instanceof HTMLFormElement ? target : submitter?.form;
 
-  if (form?.action) {
+  if (form && (event instanceof SubmitEvent || (submitter?.type === 'submit' || submitter?.type === 'image'))) {
     const text = closestContextText(submitter);
     const body = formBody(form, submitter);
-    const method: TorrentRequestMethod = form.method?.toUpperCase() === 'POST' ? 'POST' : 'GET';
-    const action = new URL(form.action, document.URL).toString();
+    // Named controls can shadow form.action, form.method and form.enctype in Chrome.
+    const method: TorrentRequestMethod = (submitter?.getAttribute('formmethod') ?? form.getAttribute('method'))?.toUpperCase() === 'POST' ? 'POST' : 'GET';
+    const action = new URL(submitter?.getAttribute('formaction') ?? form.getAttribute('action') ?? document.URL, document.URL).toString();
+    if (!['http:', 'https:'].includes(new URL(action).protocol)) return undefined;
     const adapter = getAdapter(new URL(action).host);
     const configured = isConfiguredHost(new URL(action).host, settings);
     const url = method === 'GET' ? buildRequestUrl(action, body) : action;
@@ -323,6 +330,7 @@ export function buildTorrentCaptureRequest(event: MouseEvent, settings?: Torrent
   if (!anchor?.href) return undefined;
 
   const anchorUrl = new URL(anchor.href, document.URL).toString();
+  if (!['http:', 'https:'].includes(new URL(anchorUrl).protocol)) return undefined;
   const adapter = getAdapter(new URL(anchorUrl).host);
   const configured = isConfiguredHost(new URL(anchorUrl).host, settings);
   if (!configured && !torrentFilenameRegex.test(anchorUrl)) return undefined;

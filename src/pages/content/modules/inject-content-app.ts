@@ -24,12 +24,18 @@ const destroyedEvent = 'destroyed';
  * @param el the element on which to call 'onDestroy'
  */
 async function waitDestroyed(el: Element): Promise<void> {
-  let resolve: () => void;
-  const promise = new Promise<void>((_resolve) => {
-    resolve = () => _resolve();
+  const promise = new Promise<void>((resolve) => {
+    let timeout: ReturnType<typeof setTimeout>;
+    const finish = () => {
+      clearTimeout(timeout);
+      el.removeEventListener(destroyedEvent, finish);
+      resolve();
+    };
+    // Reloaded extensions can leave a DOM root whose old context cannot respond.
+    timeout = setTimeout(finish, 500);
+    el.addEventListener(destroyedEvent, finish, { once: true });
+    el.dispatchEvent(new CustomEvent(onDestroyEvent));
   });
-  el.addEventListener(destroyedEvent, () => resolve());
-  el.dispatchEvent(new CustomEvent(onDestroyEvent));
   el.parentElement?.removeChild(el);
   return promise;
 }
@@ -73,9 +79,32 @@ function listenUntilDestroy(root: HTMLElement) {
  * @see https://bugs.chromium.org/p/chromium/issues/detail?id=1152255
  * @see https://stackoverflow.com/questions/66618136/persistent-service-worker-in-chrome-extension
  */
-function connect() {
-  LoggerService.debug(`connecting ${AppInstance.content}`);
-  portConnect({ name: AppInstance.content }).onDisconnect.addListener(connect);
+function connect(root: HTMLElement) {
+  let disposed = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let port: chrome.runtime.Port | undefined;
+  const reconnect = () => {
+    if (disposed) return;
+    try {
+      if (!chrome.runtime?.id) return;
+      port = portConnect({ name: AppInstance.content });
+      port.onDisconnect.addListener(() => {
+        if (!disposed) timer = setTimeout(reconnect, 1000);
+      });
+    } catch {
+      // The page will receive a fresh content script after an extension reload.
+    }
+  };
+  root.addEventListener(onDestroyEvent, () => {
+    disposed = true;
+    clearTimeout(timer);
+    try {
+      port?.disconnect();
+    } catch {
+      // An invalidated extension context has already disconnected the port.
+    }
+  }, { once: true });
+  reconnect();
 }
 
 /**
@@ -109,7 +138,7 @@ export async function injectContentApp(): Promise<void> {
   listenUntilDestroy(root);
 
   // Register as open
-  connect();
+  connect(root);
 
   // render component
   return ContentAppWc.prototype.render(root, storeProxy);

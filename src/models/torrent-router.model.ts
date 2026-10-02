@@ -104,7 +104,7 @@ export const defaultDestinationPresets: DestinationPreset[] = [
 
 export const defaultTorrentRouterSettings: TorrentRouterSettings = {
   enabled: true,
-  hosts: ['iptorrents.com', 'torrentleech.org', 'myanonamouse.net'],
+  hosts: ['iptorrents.com', 'torrentleech.org', 'torrentleech.cc', 'myanonamouse.net'],
   presets: defaultDestinationPresets,
   destinationHistory: {},
   favorites: [],

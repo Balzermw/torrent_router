@@ -215,7 +215,7 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
         maxWidth="sm"
         onClose={onClose}
         sx={{ zIndex: `${zIndexMax} !important`, fontSize: '16px' }}
-        slotProps={{ paper: { sx: { borderRadius: '1em' } } }}
+        slotProps={{ paper: { sx: { borderRadius: '8px' } } }}
       >
         <DialogTitle>Torrent Router</DialogTitle>
         <DialogContent>
@@ -228,7 +228,7 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
                   wordBreak: 'break-word',
                   display: '-webkit-box',
                   WebkitBoxOrient: 'vertical',
-                  WebkitLineClamp: 4,
+                  WebkitLineClamp: 2,
                   overflow: 'hidden',
                 }}
               >
@@ -246,8 +246,7 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
                 fullWidth
                 disabled={loading}
                 onChange={event => onFavoriteChange(event.target.value)}
-                SelectProps={{ native: true }}
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ select: { native: true }, inputLabel: { shrink: true } }}
               >
                 <option value="">Choose favorite</option>
                 {favoriteSuggestions.map(favorite => (
@@ -266,8 +265,7 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
               fullWidth
               disabled={loading}
               onChange={event => onPresetChange(event.target.value as TorrentRouterPresetId)}
-              SelectProps={{ native: true }}
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ select: { native: true }, inputLabel: { shrink: true } }}
             >
               {presets.map(preset => (
                 <option key={preset.id} value={preset.id}>
@@ -318,8 +316,7 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
                 fullWidth
                 disabled={loading}
                 onChange={event => setDestination(event.target.value)}
-                SelectProps={{ native: true }}
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ select: { native: true }, inputLabel: { shrink: true } }}
               >
                 <option value="">Choose recent path</option>
                 {trackerSuggestions.map(path => (
@@ -328,11 +325,6 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
                   </option>
                 ))}
               </TextField>
-            )}
-            {selectedPreset?.id !== TorrentRouterPresetId.manual && !selectedPreset?.path && (
-              <Typography variant="caption" color="warning.main">
-                Set this preset path in Downloads settings or browse to a destination now.
-              </Typography>
             )}
           </Stack>
         </DialogContent>
@@ -352,7 +344,7 @@ export const TorrentRouterDialog: FC<{ container?: PortalProps['container'] }> =
         maxWidth="sm"
         onClose={closeBrowser}
         sx={{ zIndex: `${zIndexMax} !important`, fontSize: '16px' }}
-        slotProps={{ paper: { sx: { borderRadius: '1em' } } }}
+        slotProps={{ paper: { sx: { borderRadius: '8px' } } }}
       >
         <DialogTitle>Choose Destination</DialogTitle>
         <DialogContent dividers>

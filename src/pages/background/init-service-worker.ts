@@ -19,6 +19,7 @@ import { restoreSettings } from './modules/settings-handler';
 import { restoreLocalSate } from './modules/state-handler';
 import { restoreTaskSlice } from './modules/tasks-handler';
 import { onTorrentRouterEvents } from './modules/torrent-router.handler';
+import { onTrackerScriptEvents } from './modules/tracker-scripts.handler';
 import { onInstalledEvents } from './modules/update-handler';
 
 export async function initServiceWorker() {
@@ -40,6 +41,7 @@ export async function initServiceWorker() {
 
   // Restore settings & polling
   await lastValueFrom(restoreSettings(store));
+  onTrackerScriptEvents(store);
 
   // Init notifications
   NotificationService.init(store, ServiceInstance.Background);

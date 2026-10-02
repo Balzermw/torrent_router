@@ -1,5 +1,5 @@
 /* eslint-disable ts/no-unsafe-return, ts/no-unsafe-member-access, ts/no-unsafe-assignment, ts/no-unsafe-argument */
-import { firstValueFrom, lastValueFrom, of, throwError } from 'rxjs';
+import { EMPTY, firstValueFrom, lastValueFrom, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { sendActiveTabMessage } from '../../utils/chrome/chrome-message.utils';
@@ -107,9 +107,16 @@ describe('interceptService', () => {
   });
 
   describe('openMenu()', () => {
+    it('finishes the filename callback and resumes when the tab has no receiver', async () => {
+      vi.mocked(sendActiveTabMessage).mockReturnValue(EMPTY);
+      const callback = vi.fn();
+      await expect(firstValueFrom(InterceptService.openMenu(mockDownload, { resume: true }, callback))).rejects.toThrow('Refresh the tracker tab');
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(DownloadService.resume).toHaveBeenCalledWith(42);
+    });
     it('should pause, send tab message, and call callback with folder response', async () => {
       const tabResponse = { folder: '/downloads', message: undefined, aborted: false, resume: false };
-      vi.mocked(sendActiveTabMessage).mockReturnValue(of(tabResponse) as any);
+      vi.mocked(sendActiveTabMessage).mockReturnValue(of(tabResponse));
 
       const callback = vi.fn();
 
@@ -123,7 +130,7 @@ describe('interceptService', () => {
 
     it('should resume when response.resume is true', async () => {
       const tabResponse = { folder: undefined, message: undefined, aborted: false, resume: true };
-      vi.mocked(sendActiveTabMessage).mockReturnValue(of(tabResponse) as any);
+      vi.mocked(sendActiveTabMessage).mockReturnValue(of(tabResponse));
 
       const callback = vi.fn();
 
@@ -135,7 +142,7 @@ describe('interceptService', () => {
 
     it('should resume on abort when resume option is true', async () => {
       const tabResponse = { folder: undefined, message: undefined, aborted: true, resume: false };
-      vi.mocked(sendActiveTabMessage).mockReturnValue(of(tabResponse) as any);
+      vi.mocked(sendActiveTabMessage).mockReturnValue(of(tabResponse));
 
       const callback = vi.fn();
 
@@ -145,7 +152,7 @@ describe('interceptService', () => {
     });
 
     it('should resume on error when resume=true', async () => {
-      vi.mocked(sendActiveTabMessage).mockReturnValue(throwError(() => new Error('tab error')) as any);
+      vi.mocked(sendActiveTabMessage).mockReturnValue(throwError(() => new Error('tab error')));
       const callback = vi.fn();
 
       await expect(
@@ -157,7 +164,7 @@ describe('interceptService', () => {
     });
 
     it('should erase on error when resume=false and erase=true', async () => {
-      vi.mocked(sendActiveTabMessage).mockReturnValue(throwError(() => new Error('tab error')) as any);
+      vi.mocked(sendActiveTabMessage).mockReturnValue(throwError(() => new Error('tab error')));
       const callback = vi.fn();
 
       await expect(
@@ -171,7 +178,7 @@ describe('interceptService', () => {
 
     it('should call callback with undefined when no folder in response', async () => {
       const tabResponse = { folder: undefined, message: undefined, aborted: false, resume: false };
-      vi.mocked(sendActiveTabMessage).mockReturnValue(of(tabResponse) as any);
+      vi.mocked(sendActiveTabMessage).mockReturnValue(of(tabResponse));
 
       const callback = vi.fn();
 

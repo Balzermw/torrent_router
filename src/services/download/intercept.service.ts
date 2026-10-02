@@ -5,7 +5,7 @@ import type { TaskCreateResponse } from '../../models/synology.model';
 import type { TaskForm } from '../../models/task.model';
 import type { DownloadFilenameSuggestion, DownloadItem } from '../../utils/chrome/chrome-download.utils';
 
-import { switchMap, tap } from 'rxjs';
+import { switchMap, tap, throwIfEmpty } from 'rxjs';
 
 import { ChromeMessageType } from '../../models/message.model';
 import { sendActiveTabMessage } from '../../utils/chrome/chrome-message.utils';
@@ -54,6 +54,7 @@ export class InterceptService {
           payload: form,
         }),
       ),
+      throwIfEmpty(() => new Error('The destination prompt could not open. Refresh the tracker tab and retry.')),
       tap({
         next: ({ folder, message, aborted, resume: _resume }) => {
           const response = folder ? { filename: `.${folder}/${download?.filename?.split('/')?.pop()}` } : undefined;

@@ -1,5 +1,7 @@
 import { fromEventPattern } from 'rxjs';
 
+import { LoggerService } from '../../../services/logger/logger.service';
+import { redactTrackerUrl } from '../../../services/torrent/torrent-router.service';
 import { buildTorrentCaptureRequest } from '../../../services/torrent/tracker-adapters';
 import { storeProxy } from '../../../store/store-proxy';
 import { anchor$, lastClick$ } from '../service/anchor.service';
@@ -45,21 +47,29 @@ function recursivelyFindAnchorAncestor(e: HTMLElement | null, depth = 10): HTMLA
  * Detect if the click event is on a supported downloadable link
  * @param event mouse event
  */
-async function listener(event: MouseEvent) {
-  const anchor = recursivelyFindAnchorAncestor(event.target as HTMLElement);
-  lastClick$.next({ event, anchor });
+function listener(event: MouseEvent | SubmitEvent) {
+  if (event instanceof MouseEvent) {
+    const anchor = recursivelyFindAnchorAncestor(event.target as HTMLElement);
+    lastClick$.next({ event, anchor });
+  }
   if (storeProxy.getState()?.settings?.content?.intercept === false) return;
-  // Left clicks only
-  if (event.button !== 0) return;
+  if (event instanceof MouseEvent && (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return;
 
   const torrentCapture = buildTorrentCaptureRequest(event, storeProxy.getState()?.settings?.torrentRouter);
   if (torrentCapture) {
     event.preventDefault();
-    event.stopPropagation();
+    event.stopImmediatePropagation();
+    LoggerService.info('Torrent Router intercepted download.', {
+      tracker: torrentCapture.tracker,
+      method: torrentCapture.method,
+      url: redactTrackerUrl(torrentCapture.url),
+    });
     torrentRouterDialog$.next({ open: true, request: torrentCapture });
     return;
   }
 
+  if (!(event instanceof MouseEvent)) return;
+  const anchor = recursivelyFindAnchorAncestor(event.target as HTMLElement);
   if (!anchor?.href) return;
   if (!startsWithAnyProtocol(anchor.href, DOWNLOAD_ONLY_PROTOCOLS)) return;
   anchor$.next({
@@ -74,12 +84,14 @@ async function listener(event: MouseEvent) {
 }
 
 function addAnchorClickListener() {
-  document.addEventListener('click', listener);
-  document.addEventListener('contextmenu', listener);
+  document.addEventListener('click', listener, true);
+  document.addEventListener('submit', listener, true);
+  document.addEventListener('contextmenu', listener, true);
 }
 function removeAnchorClickListener() {
-  document.removeEventListener('click', listener);
-  document.removeEventListener('contextmenu', listener);
+  document.removeEventListener('click', listener, true);
+  document.removeEventListener('submit', listener, true);
+  document.removeEventListener('contextmenu', listener, true);
 }
 
-export const clickListener$ = fromEventPattern<MouseEvent>(addAnchorClickListener, removeAnchorClickListener);
+export const clickListener$ = fromEventPattern<MouseEvent | SubmitEvent>(addAnchorClickListener, removeAnchorClickListener);

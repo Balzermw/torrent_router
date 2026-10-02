@@ -7,6 +7,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 import StarIcon from '@mui/icons-material/Star';
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -32,8 +33,9 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { defaultTorrentRouterSettings, TorrentRouterPresetId } from '../../../../models/torrent-router.model';
 import { removeDestinationFavorite } from '../../../../services/torrent/torrent-router-history';
-import { syncTorrentRouter } from '../../../../store/actions/settings.action';
-import { getTorrentRouterSettings } from '../../../../store/selectors/settings.selector';
+import { syncContentSettings, syncTorrentRouter } from '../../../../store/actions/settings.action';
+import { getContentSettings, getTorrentRouterSettings } from '../../../../store/selectors/settings.selector';
+import { trackerOriginPatterns } from '../../../../utils/chrome/chrome-permissions.utils';
 import { ButtonWithConfirm } from '../../../common/button/button-with-confirm';
 import { Explorer } from '../../../common/explorer/folder/explorer';
 
@@ -67,9 +69,12 @@ function normalizeSettings(settings: TorrentRouterSettings): TorrentRouterSettin
 export function SettingsTorrentRouter() {
   const dispatch = useDispatch();
   const state = useSelector<StoreState, TorrentRouterSettings>(getTorrentRouterSettings);
+  const contentSettings = useSelector(getContentSettings);
   const [form, setForm] = useState<TorrentRouterSettings>(() => normalizeSettings(state));
   const [browsePreset, setBrowsePreset] = useState<DestinationPreset>();
   const [browsePath, setBrowsePath] = useState('');
+  const [permissionError, setPermissionError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const isDirty = JSON.stringify(normalizeSettings(state)) !== JSON.stringify(form);
 
@@ -80,10 +85,22 @@ export function SettingsTorrentRouter() {
     }));
   };
 
-  const save = () => {
-    const next = normalizeSettings(form);
-    dispatch(syncTorrentRouter(next));
-    setForm(next);
+  const save = async () => {
+    setSaving(true);
+    setPermissionError('');
+    try {
+      const next = normalizeSettings(form);
+      if (next.enabled && !await chrome.permissions.request({ origins: trackerOriginPatterns(next.hosts) })) {
+        setPermissionError('Site access was not granted. Approve access to enable interception on these trackers.');
+        return;
+      }
+      dispatch(syncTorrentRouter(next));
+      setForm(next);
+    } catch (error) {
+      setPermissionError(error instanceof Error ? error.message : 'Unable to save tracker site access.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const restore = () => {
@@ -117,10 +134,16 @@ export function SettingsTorrentRouter() {
         <CardHeader
           title="Torrent Router"
           slotProps={{ title: { variant: 'h6', color: 'text.primary', sx: { textTransform: 'capitalize' } } }}
-          action={<Switch checked={form.enabled} onChange={event => setForm(current => ({ ...current, enabled: event.target.checked }))} />}
+          action={<Switch checked={form.enabled} slotProps={{ input: { 'aria-label': 'Enable torrent interception' } }} onChange={event => setForm(current => ({ ...current, enabled: event.target.checked }))} />}
           sx={{ p: '1rem 1rem 0' }}
         />
         <CardContent>
+          {permissionError && <Alert severity="error" sx={{ mb: 2 }}>{permissionError}</Alert>}
+          {form.enabled && !contentSettings.intercept && (
+            <Alert severity="warning" sx={{ mb: 2 }} action={<Button onClick={() => dispatch(syncContentSettings({ intercept: true }))}>Enable</Button>}>
+              Link interception is disabled.
+            </Alert>
+          )}
           <Collapse in={form.enabled} unmountOnExit>
             <Stack spacing={2}>
               <TextField
@@ -203,7 +226,7 @@ export function SettingsTorrentRouter() {
               buttonProps={{ variant: 'outlined', color: 'secondary', sx: { flex: '0 1 8rem' }, startIcon: <SettingsBackupRestoreIcon /> }}
               onDialogConfirm={restore}
             />
-            <Button variant="outlined" color={isDirty ? 'primary' : 'info'} sx={{ width: '5rem' }} disabled={!isDirty} onClick={save} startIcon={<SaveIcon />}>
+            <Button variant="outlined" color={isDirty ? 'primary' : 'info'} sx={{ width: '5rem' }} disabled={saving} onClick={save} startIcon={<SaveIcon />}>
               Save
             </Button>
           </Stack>

@@ -83,6 +83,57 @@ describe('tracker-adapters', () => {
     expect(request?.body?.entries).toContainEqual(['action', 'download']);
   });
 
+  it('captures a keyboard form submission and honors submitter overrides', () => {
+    document.body.innerHTML = `
+      <form action="/search" method="get">
+        <input name="csrf" value="test-token" />
+        <input name="action" value="other" />
+        <button formaction="https://iptorrents.com/download.php" formmethod="post" name="action" value="download">Download</button>
+      </form>
+    `;
+    const form = document.querySelector('form')!;
+    const button = document.querySelector('button')!;
+    const event = new SubmitEvent('submit', { submitter: button });
+    Object.defineProperty(event, 'target', { value: form });
+    expect(buildTorrentCaptureRequest(event, settings)).toMatchObject({
+      url: 'https://iptorrents.com/download.php',
+      method: 'POST',
+      body: { entries: [['csrf', 'test-token'], ['action', 'other'], ['action', 'download']] },
+    });
+  });
+
+  it('reads form attributes when named fields shadow DOM properties', () => {
+    document.body.innerHTML = '<form action="https://iptorrents.com/download.php" method="post"><input name="method" value="download" /><button name="action" value="download">Download</button></form>';
+    const form = document.querySelector('form')!;
+    Object.defineProperty(form, 'action', { value: document.querySelector('button') });
+    Object.defineProperty(form, 'method', { value: document.querySelector('input') });
+    expect(buildTorrentCaptureRequest(clickEvent(document.querySelector('button')!), settings)).toMatchObject({
+      url: 'https://iptorrents.com/download.php',
+      method: 'POST',
+      body: { enctype: 'application/x-www-form-urlencoded' },
+    });
+  });
+
+  it('detects clicks on SVG icons inside torrent links', () => {
+    document.body.innerHTML = '<a href="https://iptorrents.com/download.php?id=123"><svg><path /></svg></a>';
+    expect(buildTorrentCaptureRequest(clickEvent(document.querySelector('path')!), settings)?.tracker).toBe('IPTorrents');
+  });
+
+  it('supports the TorrentLeech alternate domain with older saved settings', () => {
+    document.body.innerHTML = '<a href="https://www.torrentleech.cc/download/123">Download</a>';
+    expect(buildTorrentCaptureRequest(clickEvent(document.querySelector('a')!), settings)?.tracker).toBe('TorrentLeech');
+  });
+
+  it('leaves modified clicks and non-web links to the browser', () => {
+    document.body.innerHTML = '<a href="https://iptorrents.com/download.php?id=123">Download</a>';
+    const link = document.querySelector('a')!;
+    const event = new MouseEvent('click', { button: 0, ctrlKey: true });
+    Object.defineProperty(event, 'target', { value: link });
+    expect(buildTorrentCaptureRequest(event, settings)).toBeUndefined();
+    link.href = 'javascript:downloadTorrent()';
+    expect(buildTorrentCaptureRequest(clickEvent(link), settings)).toBeUndefined();
+  });
+
   it('uses the page title instead of noisy CSS and promo text around a download link', () => {
     document.title = 'I Have a Crush at Work, Vol. 5 | MyAnonamouse';
     document.body.innerHTML = `
